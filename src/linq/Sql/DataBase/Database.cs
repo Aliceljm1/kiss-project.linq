@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Text;
-using Kiss.Linq;
 using Kiss.Linq.Fluent;
 
 namespace Kiss.Linq.Sql.DataBase

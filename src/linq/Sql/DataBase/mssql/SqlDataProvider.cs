@@ -118,7 +118,7 @@ namespace Kiss.Linq.Sql.DataBase
             {
                 int startIndex = query.PageSize * query.PageIndex + 1;
                 sql = string.Format("WITH tempTab AS ( SELECT ROW_NUMBER() OVER (Order By {0}) AS Row, {1} from {2} {3})  Select * FROM tempTab Where Row between {4} and {5}",
-                    StringUtil.HasText(query.OrderByClause) ? query.OrderByClause : query.TableField,
+                    StringUtil.HasText(query.OrderByClause) ? query.OrderByClause : "rand()",
                     query.TableField,
                     query.TableName,
                     where,

@@ -38,6 +38,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\Kiss.Linq.XML</DocumentationFile>
+    <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Kiss, Version=2.6.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -88,8 +89,7 @@
     <Compile Include="Sql\DataBase\ScriptProcessor.cs" />
     <Compile Include="Sql\DataBase\mssql\SqlDataProvider.cs" />
     <Compile Include="Sql\DataBase\sqlite\SqliteDataProvider.cs" />
-    <Compile Include="Sql\ObjManager.cs" />
-    <Compile Include="Sql\ObjQuery.cs" />
+    <Compile Include="Sql\Repository.cs" />
     <Compile Include="Sql\DataBase\sqlite\SqliteFormatProvider.cs" />
     <Compile Include="Sql\SqlQuery.cs" />
     <Compile Include="Sql\DataBase\mssql\TSqlFormatProvider.cs" />
