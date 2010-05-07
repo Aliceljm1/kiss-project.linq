@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A2171F32-6AB4-4BA4-920B-EB1D28F5F7F2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Kiss.Linq</RootNamespace>
+    <AssemblyName>Kiss.Linq</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <StartupObject>
+    </StartupObject>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DocumentationFile>
+    </DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\Kiss.Linq.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Kiss, Version=2.6.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\Kiss.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.SQLite, Version=1.0.65.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\System.Data.SQLite.DLL</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Bucket.cs" />
+    <Compile Include="BucketImpl.cs" />
+    <Compile Include="BucketImpls.cs" />
+    <Compile Include="BucketItem.cs" />
+    <Compile Include="Collection\ReadOnlyQueryCollection.cs" />
+    <Compile Include="ExpressionVisitor.cs" />
+    <Compile Include="Fluent\FluentBucket.cs" />
+    <Compile Include="Fluent\FluentEntity.cs" />
+    <Compile Include="Fluent\FluentExpressionTree.cs" />
+    <Compile Include="Fluent\FluentIterator.cs" />
+    <Compile Include="Interface\IBucket.cs" />
+    <Compile Include="Interface\IFormatProvider.cs" />
+    <Compile Include="Interface\IQueryObjectImpl.cs" />
+    <Compile Include="Interface\IVersionItem.cs" />
+    <Compile Include="LinqException.cs" />
+    <Compile Include="Interface\IModify.cs" />
+    <Compile Include="Interface\IQuery.cs" />
+    <Compile Include="Properties\Resource.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resource.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Sql\DataBase\Database.cs" />
+    <Compile Include="Sql\DataBase\DatabaseContext.cs" />
+    <Compile Include="Sql\DataBase\DataBaseInitializer.cs" />
+    <Compile Include="Sql\DataBase\DDLPlugin.cs" />
+    <Compile Include="Sql\DataBase\IDataProvider.cs" />
+    <Compile Include="Sql\DataBase\IDDL.cs" />
+    <Compile Include="Sql\DataBase\ScriptProcessor.cs" />
+    <Compile Include="Sql\DataBase\mssql\SqlDataProvider.cs" />
+    <Compile Include="Sql\DataBase\sqlite\SqliteDataProvider.cs" />
+    <Compile Include="Sql\ObjManager.cs" />
+    <Compile Include="Sql\ObjQuery.cs" />
+    <Compile Include="Sql\DataBase\sqlite\SqliteFormatProvider.cs" />
+    <Compile Include="Sql\SqlQuery.cs" />
+    <Compile Include="Sql\DataBase\mssql\TSqlFormatProvider.cs" />
+    <Compile Include="TreeNode.cs" />
+    <Compile Include="QueryItemComparer.cs" />
+    <Compile Include="ProjectedQuery.cs" />
+    <Compile Include="QueryObject.cs" />
+    <Compile Include="Query.cs" />
+    <Compile Include="Collection\QueryCollection.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\..\..\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="QueryExtension.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Sql\DataBase\sqlite\CreateTable.sql" />
+    <EmbeddedResource Include="Sql\DataBase\mssql\CreateTable.sql" />
+    <EmbeddedResource Include="Sql\DataBase\mssql\PkConstant.sql" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
