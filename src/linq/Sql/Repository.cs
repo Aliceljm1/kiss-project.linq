@@ -217,6 +217,8 @@ namespace Kiss.Linq.Sql
 
             List<T> list = new List<T>();
 
+            q.FireBeforeQueryEvent("Gets");
+
             using (IDataReader rdr = q.GetReader())
             {
                 while (rdr.Read())
@@ -263,6 +265,8 @@ namespace Kiss.Linq.Sql
         {
             CheckQuery(q);
 
+            q.FireBeforeQueryEvent("Count");
+
             return q.GetRelationCount();
         }
 
@@ -295,7 +299,7 @@ namespace Kiss.Linq.Sql
                 q.ParentCacheKey = tablename;
 
             if (string.IsNullOrEmpty(q.TableName))
-                q.TableName = tablename;
+                q.TableName = tablename;                            
         }
 
         #region IAutoStart Members

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
-using Kiss.Query;
-using Kiss.Utils;
 using System.Text;
 using Kiss.Linq.Fluent;
+using Kiss.Query;
+using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.DataBase
 {

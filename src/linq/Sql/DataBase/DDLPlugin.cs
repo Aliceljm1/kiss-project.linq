@@ -26,13 +26,13 @@ namespace Kiss.Linq.Sql.DataBase
                 {
                     if (!ddl_status.Contains(key))
                     {
-                        Type baseType = typeof(Obj);
+                        Type baseType = typeof(IQueryObject);
 
                         List<Type> ddlTypes = new List<Type>();
 
                         foreach (Type type in objtype.Assembly.GetTypes())
                         {
-                            if (!type.IsSubclassOf(baseType) || type.IsAbstract)
+                            if (type.IsAbstract || type.GetInterface(baseType.Name) != baseType)
                                 continue;
 
                             ddlTypes.Add(type);
@@ -66,7 +66,9 @@ namespace Kiss.Linq.Sql.DataBase
                         {
                             foreach (Type type in ddlTypes)
                             {
-                                ddl_status.Add(type.Name + css.Name);
+                                string k = type.Name + css.Name;
+                                if (!ddl_status.Contains(k))
+                                    ddl_status.Add(k);
                             }
                         }
                     }

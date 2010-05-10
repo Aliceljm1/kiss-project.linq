@@ -16,7 +16,7 @@ namespace Kiss.Linq.Sql.DataBase
             bool ddl = setting["ddl"].ToBoolean(true);
 
             if (ddl)
-                sl.AddComponentInstance(new DDLPlugin());
+                sl.AddComponent("kiss.ddl", typeof(DDLPlugin));
         }
     }
 }
