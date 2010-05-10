@@ -1,21 +1,4 @@
-﻿#region File Comment
-//+-------------------------------------------------------------------+
-//+ File Created:   2009-09-03
-//+-------------------------------------------------------------------+
-//+ History:
-//+-------------------------------------------------------------------+
-//+ 2009-09-03		zhli Comment Created
-//+-------------------------------------------------------------------+
-//+ 2009-09-03		zhli add FetchDataReader method to throw more clear exception when
-//+                 property in class and column in table is not equal.
-//+-------------------------------------------------------------------+
-//+ 2009-09-07		zhli support nullable<> type and enum
-//+-------------------------------------------------------------------+
-//+ 2009-09-16		zhli fix a bug when add item
-//+-------------------------------------------------------------------+
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -51,10 +34,22 @@ namespace Kiss.Linq.Sql
             }
         }
 
-        /// <summary>
-        /// retain context
-        /// </summary>
-        public bool RetainContext { get; set; }
+        public bool EnablePreQueryEvent { get; set; }
+        public bool EnableAfterQueryEvent { get; set; }
+        public bool EnableBatchSubmitChanges { get; set; }
+
+        public void Set(bool preQueryEvent, bool afterQueryEvent, bool batchSubmit)
+        {
+            EnablePreQueryEvent = preQueryEvent;
+            EnableAfterQueryEvent = afterQueryEvent;
+
+            EnableBatchSubmitChanges = batchSubmit;
+        }
+
+        public void Set(bool queryEvent, bool batchSubmit)
+        {
+            Set(queryEvent, queryEvent, batchSubmit);
+        }
 
         #endregion
 
@@ -62,7 +57,6 @@ namespace Kiss.Linq.Sql
 
         public SqlQuery(ConnectionStringSettings connectionStringSettings)
         {
-            RetainContext = true;
             this.connectionStringSettings = connectionStringSettings;
         }
 
@@ -75,7 +69,7 @@ namespace Kiss.Linq.Sql
         /// </summary>
         public override void SubmitChanges()
         {
-            if (!RetainContext)
+            if (!EnableBatchSubmitChanges)
             {
                 var queryColleciton = (QueryCollection<T>)this.collection;
 
@@ -90,7 +84,7 @@ namespace Kiss.Linq.Sql
                 }
                 catch (Exception ex)
                 {
-                    throw new LinqException("BATCH!  " + ex.Message, ex);
+                    throw new LinqException("BATCH ERROR!  " + ex.Message, ex);
                 }
 
                 queryColleciton.Clear();
@@ -124,7 +118,7 @@ namespace Kiss.Linq.Sql
         {
             string sql = FluentBucket.As(bucket).Translate(FormatMethod.GetItem, DataContext.FormatProvider);
 
-            if (!RetainContext)
+            if (EnablePreQueryEvent)
             {
                 DatabaseContext.QueryEventArgs e = new DatabaseContext.QueryEventArgs()
                 {
@@ -140,12 +134,15 @@ namespace Kiss.Linq.Sql
             T result = ExecuteSingle(sql,
                bucket);
 
-            DataContext.OnAfterQuery(new DatabaseContext.QueryEventArgs()
+            if (EnableAfterQueryEvent)
             {
-                Type = typeof(T),
-                Sql = sql,
-                Result = result
-            });
+                DataContext.OnAfterQuery(new DatabaseContext.QueryEventArgs()
+                {
+                    Type = typeof(T),
+                    Sql = sql,
+                    Result = result
+                });
+            }
 
             return result;
         }
@@ -154,7 +151,7 @@ namespace Kiss.Linq.Sql
         {
             string sql = FluentBucket.As(bucket).Translate(FormatMethod.Process, DataContext.FormatProvider);
 
-            if (!RetainContext)
+            if (EnablePreQueryEvent)
             {
                 DatabaseContext.QueryEventArgs e = new DatabaseContext.QueryEventArgs()
                 {
@@ -175,12 +172,15 @@ namespace Kiss.Linq.Sql
                 items,
                 bucket.Items);
 
-            DataContext.OnAfterQuery(new DatabaseContext.QueryEventArgs()
+            if (EnableAfterQueryEvent)
             {
-                Type = typeof(T),
-                Sql = sql,
-                Result = ((QueryCollection<T>)collection).Items
-            });
+                DataContext.OnAfterQuery(new DatabaseContext.QueryEventArgs()
+                {
+                    Type = typeof(T),
+                    Sql = sql,
+                    Result = ((QueryCollection<T>)collection).Items
+                });
+            }
         }
 
         #endregion

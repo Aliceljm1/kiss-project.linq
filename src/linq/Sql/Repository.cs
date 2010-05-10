@@ -100,7 +100,8 @@ namespace Kiss.Linq.Sql
 
         public virtual T Save(NameValueCollection param, ConvertObj<T> converter)
         {
-            Query.RetainContext = true;
+            Query.EnableBatchSubmitChanges = false;
+            Query.EnablePreQueryEvent = false;
 
             t id = default(t);
             if (StringUtil.HasText(param["id"]))
@@ -299,7 +300,7 @@ namespace Kiss.Linq.Sql
                 q.ParentCacheKey = tablename;
 
             if (string.IsNullOrEmpty(q.TableName))
-                q.TableName = tablename;                            
+                q.TableName = tablename;
         }
 
         #region IAutoStart Members
