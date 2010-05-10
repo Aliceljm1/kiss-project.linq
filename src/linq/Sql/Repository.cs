@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Configuration;
 using System.Data;
 using System.Linq;
@@ -39,6 +40,13 @@ namespace Kiss.Linq.Sql
         }
 
         #endregion
+
+        //protected GetCacheKey getCacheKey = delegate(t i) { return string.Format("{0}:{1}", typeof(T).Name.ToLower(), i.ToString()); };
+
+        ///// <summary>
+        ///// Fine-grained using id
+        ///// </summary>
+        //public bool CacheIdGranularity { get; set; }
 
         public virtual T Get(t id)
         {
@@ -80,6 +88,50 @@ namespace Kiss.Linq.Sql
             }
 
             Query.SubmitChanges();
+        }
+
+        public virtual List<T> Gets(string commaDelimitedIds)
+        {
+            return Gets(StringUtil.ToArray<string, t>(StringUtil.CommaDelimitedListToStringArray(commaDelimitedIds), delegate(string str)
+            {
+                return TypeConvertUtil.ConvertTo<t>(str);
+            }));
+        }
+
+        public virtual T Save(NameValueCollection param, ConvertObj<T> converter)
+        {
+            Query.RetainContext = true;
+
+            t id = default(t);
+            if (StringUtil.HasText(param["id"]))
+                id = TypeConvertUtil.ConvertTo<t>(param["id"]);
+
+            T obj;
+
+            if (default(t).Equals(id))
+            {
+                obj = new T();
+                Query.Add(obj);
+            }
+            else
+            {
+                obj = Get(id);
+
+                if (obj == null)
+                    throw new ArgumentException(string.Format("{0} object not exist. Id:{1}", typeof(T).Name, id));
+            }
+
+            if (!converter(obj, param))
+                return null;
+
+            Query.SubmitChanges();
+
+            return obj;
+        }
+
+        public virtual T Save(string param, ConvertObj<T> converter)
+        {
+            return Save(StringUtil.DelimitedEquation2NVCollection("&", param), converter);
         }
     }
 
@@ -183,12 +235,14 @@ namespace Kiss.Linq.Sql
                             {
                                 o = rdr[index];
                                 if (!(o is DBNull))
+                                {
                                     o = TypeConvertUtil.ConvertTo(o, bucketItem.PropertyType);
 
-                                if (o != null)
-                                    info.SetValue(item
-                                        , o
-                                        , null);
+                                    if (o != null)
+                                        info.SetValue(item
+                                            , o
+                                            , null);
+                                }
                             }
                         }
                     });
@@ -217,6 +271,12 @@ namespace Kiss.Linq.Sql
             Query.SubmitChanges();
 
             return obj;
+        }
+
+        public virtual List<T> GetsAll()
+        {
+            return (from q in Query
+                    select q).ToList();
         }
 
         object IRepository.Gets(QueryCondition q)
