@@ -410,6 +410,12 @@ namespace Kiss.Linq.Linq2Sql.Test
                         select book;
 
             Assert.AreEqual(query.Count(), 2);
+
+            query = from book in bookContext
+                    where new List<string> { "Paolo Pialorsi", "Robert Pickering" }.Contains(book.Author)
+                    select book;
+
+            Assert.AreEqual(query.Count(), 2);
         }
 
         [Test]

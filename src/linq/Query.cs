@@ -791,18 +791,20 @@ namespace Kiss.Linq
                 string methodName = methodCallExpression.Method.Name;
                 if (methodName == "Contains")
                 {
-                    ExpressionType expType = ((MemberExpression)methodCallExpression.Object).Expression.NodeType;
-                    if (expType == ExpressionType.Parameter)
+                    bool islike = methodCallExpression.Object.NodeType == ExpressionType.MemberAccess &&
+                        ((MemberExpression)methodCallExpression.Object).Expression.NodeType == ExpressionType.Parameter;
+
+                    if (islike)
                     {
                         MemberExpression memberExp = ((MemberExpression)(methodCallExpression.Object));
                         string memberName = memberExp.Member.Name;
                         if (bucketImpl.Items.ContainsKey(memberName))
                         {
-                            string val = string.Empty;
+                            object val = null;
                             if (methodCallExpression.Arguments[0] is ConstantExpression)
-                                val = ((ConstantExpression)methodCallExpression.Arguments[0]).Value as string;
+                                val = ((ConstantExpression)methodCallExpression.Arguments[0]).Value;
                             else
-                                val = Expression.Lambda(methodCallExpression.Arguments[0]).Compile().DynamicInvoke() as string;
+                                val = Expression.Lambda(methodCallExpression.Arguments[0]).Compile().DynamicInvoke();
 
                             var leafItem = new BucketItem
                             {
@@ -819,7 +821,7 @@ namespace Kiss.Linq
                             bucketImpl.CurrentTreeNode.Nodes.Add(new TreeNode.Node { Value = leafItem });
                         }
                     }
-                    else if (expType == ExpressionType.Constant)
+                    else
                     {
                         var value = Expression.Lambda(methodCallExpression.Object).Compile().DynamicInvoke() as IEnumerable;
 
@@ -860,11 +862,11 @@ namespace Kiss.Linq
                     string memberName = memberExp.Member.Name;
                     if (bucketImpl.Items.ContainsKey(memberName))
                     {
-                        string val = string.Empty;
+                        object val = null;
                         if (methodCallExpression.Arguments[0] is ConstantExpression)
-                            val = ((ConstantExpression)methodCallExpression.Arguments[0]).Value as string;
+                            val = ((ConstantExpression)methodCallExpression.Arguments[0]).Value;
                         else
-                            val = Expression.Lambda(methodCallExpression.Arguments[0]).Compile().DynamicInvoke() as string;
+                            val = Expression.Lambda(methodCallExpression.Arguments[0]).Compile().DynamicInvoke();
 
                         var leafItem = new BucketItem
                         {
