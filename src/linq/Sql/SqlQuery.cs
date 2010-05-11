@@ -69,7 +69,7 @@ namespace Kiss.Linq.Sql
         /// </summary>
         public override void SubmitChanges()
         {
-            if (!EnableBatchSubmitChanges)
+            if (EnableBatchSubmitChanges)
             {
                 var queryColleciton = (QueryCollection<T>)this.collection;
 
