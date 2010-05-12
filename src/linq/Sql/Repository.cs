@@ -50,6 +50,9 @@ namespace Kiss.Linq.Sql
 
         public virtual T Get(t id)
         {
+            if (object.Equals(id, default(t)))
+                return default(T);
+
             return (from obj in Query
                     where obj.Id.Equals(id)
                     select obj).FirstOrDefault();
@@ -87,7 +90,7 @@ namespace Kiss.Linq.Sql
                 Query.Remove(obj);
             }
 
-            Query.SubmitChanges();
+            Query.SubmitChanges(true);
         }
 
         public virtual List<T> Gets(string commaDelimitedIds)
@@ -100,9 +103,6 @@ namespace Kiss.Linq.Sql
 
         public virtual T Save(NameValueCollection param, ConvertObj<T> converter)
         {
-            Query.EnableBatchSubmitChanges = false;
-            Query.EnablePreQueryEvent = false;
-
             t id = default(t);
             if (StringUtil.HasText(param["id"]))
                 id = TypeConvertUtil.ConvertTo<t>(param["id"]);
@@ -116,6 +116,7 @@ namespace Kiss.Linq.Sql
             }
             else
             {
+                Query.EnableQueryEvent = false;
                 obj = Get(id);
 
                 if (obj == null)
@@ -125,7 +126,7 @@ namespace Kiss.Linq.Sql
             if (!converter(obj, param))
                 return null;
 
-            Query.SubmitChanges();
+            Query.SubmitChanges(false);
 
             return obj;
         }
@@ -179,18 +180,15 @@ namespace Kiss.Linq.Sql
             }
         }
 
-        private SqlQuery<T> query;
+        private SqlQuery<T> _query;
 
-        /// <summary>
-        /// 获取linq query，其生命周期由ObjManager控制
-        /// </summary>
-        public SqlQuery<T> Query
+        public ILinqQuery<T> Query
         {
             get
             {
-                if (query == null)
-                    query = CreateQuery();
-                return query;
+                if (_query == null)
+                    _query = CreateQuery();
+                return _query;
             }
         }
 
@@ -273,7 +271,7 @@ namespace Kiss.Linq.Sql
 
         public virtual T Save(T obj)
         {
-            Query.SubmitChanges();
+            Query.SubmitChanges(false);
 
             return obj;
         }

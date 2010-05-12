@@ -14,7 +14,7 @@ namespace Kiss.Linq.Sql
     /// sql query
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class SqlQuery<T> : Query<T>
+    public class SqlQuery<T> : Query<T>, ILinqQuery<T>
         where T : class, IQueryObject
     {
         #region fields
@@ -34,22 +34,7 @@ namespace Kiss.Linq.Sql
             }
         }
 
-        public bool EnablePreQueryEvent { get; set; }
-        public bool EnableAfterQueryEvent { get; set; }
-        public bool EnableBatchSubmitChanges { get; set; }
-
-        public void Set(bool preQueryEvent, bool afterQueryEvent, bool batchSubmit)
-        {
-            EnablePreQueryEvent = preQueryEvent;
-            EnableAfterQueryEvent = afterQueryEvent;
-
-            EnableBatchSubmitChanges = batchSubmit;
-        }
-
-        public void Set(bool queryEvent, bool batchSubmit)
-        {
-            Set(queryEvent, queryEvent, batchSubmit);
-        }
+        public bool EnableQueryEvent { get; set; }
 
         #endregion
 
@@ -58,18 +43,14 @@ namespace Kiss.Linq.Sql
         public SqlQuery(ConnectionStringSettings connectionStringSettings)
         {
             this.connectionStringSettings = connectionStringSettings;
+            this.EnableQueryEvent = true;
         }
 
         #endregion
 
-        #region override
-
-        /// <summary>
-        /// submit change 
-        /// </summary>
-        public override void SubmitChanges()
+        public void SubmitChanges(bool batch)
         {
-            if (EnableBatchSubmitChanges)
+            if (batch)
             {
                 var queryColleciton = (QueryCollection<T>)this.collection;
 
@@ -84,7 +65,7 @@ namespace Kiss.Linq.Sql
                 }
                 catch (Exception ex)
                 {
-                    throw new LinqException("BATCH ERROR!  " + ex.Message, ex);
+                    throw new LinqException("BATCH SubmitChanges ERROR!  " + ex.Message, ex);
                 }
 
                 queryColleciton.Clear();
@@ -94,6 +75,8 @@ namespace Kiss.Linq.Sql
                 base.SubmitChanges();
             }
         }
+
+        #region override
 
         protected override bool AddItem(IBucket bucket)
         {
@@ -118,7 +101,7 @@ namespace Kiss.Linq.Sql
         {
             string sql = FluentBucket.As(bucket).Translate(FormatMethod.GetItem, DataContext.FormatProvider);
 
-            if (EnablePreQueryEvent)
+            if (EnableQueryEvent)
             {
                 DatabaseContext.QueryEventArgs e = new DatabaseContext.QueryEventArgs()
                 {
@@ -134,7 +117,7 @@ namespace Kiss.Linq.Sql
             T result = ExecuteSingle(sql,
                bucket);
 
-            if (EnableAfterQueryEvent)
+            if (EnableQueryEvent)
             {
                 DataContext.OnAfterQuery(new DatabaseContext.QueryEventArgs()
                 {
@@ -151,7 +134,7 @@ namespace Kiss.Linq.Sql
         {
             string sql = FluentBucket.As(bucket).Translate(FormatMethod.Process, DataContext.FormatProvider);
 
-            if (EnablePreQueryEvent)
+            if (EnableQueryEvent)
             {
                 DatabaseContext.QueryEventArgs e = new DatabaseContext.QueryEventArgs()
                 {
@@ -172,7 +155,7 @@ namespace Kiss.Linq.Sql
                 items,
                 bucket.Items);
 
-            if (EnableAfterQueryEvent)
+            if (EnableQueryEvent)
             {
                 DataContext.OnAfterQuery(new DatabaseContext.QueryEventArgs()
                 {
