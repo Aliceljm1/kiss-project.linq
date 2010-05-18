@@ -890,7 +890,7 @@ namespace Kiss.Linq
                     targetType = targetType.DeclaringType;
                 }
 
-                PropertyInfo[] infos = typeof(T).GetProperties();
+                PropertyInfo[] infos = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
                 targetProperty = FindTargetPropertyWhereUsed(infos, targetType);
 
@@ -970,7 +970,7 @@ namespace Kiss.Linq
             // try only if no properties found on the first step.
             foreach (PropertyInfo info in compositeProperties)
             {
-                return FindTargetPropertyWhereUsed(info.PropertyType.GetProperties(), targetType);
+                return FindTargetPropertyWhereUsed(info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public), targetType);
             }
 
             return null;
@@ -978,7 +978,7 @@ namespace Kiss.Linq
 
         private static object FindDeepObject(object nestedObject, Type baseType, string propName)
         {
-            PropertyInfo[] infos = baseType.GetProperties();
+            PropertyInfo[] infos = baseType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
             foreach (var info in infos)
             {
@@ -988,7 +988,7 @@ namespace Kiss.Linq
                 }
                 else
                 {
-                    if (info.PropertyType.GetProperties().Count() > 0)
+                    if (info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public).Count() > 0)
                     {
                         try
                         {
@@ -1048,7 +1048,7 @@ namespace Kiss.Linq
 
             if (current != null && nested)
             {
-                foreach (PropertyInfo property in info.PropertyType.GetProperties())
+                foreach (PropertyInfo property in info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                 {
                     object targetValue = property.GetValue(value, null);
 

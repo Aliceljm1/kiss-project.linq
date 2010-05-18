@@ -43,7 +43,7 @@ namespace Kiss.Linq
         {
             get
             {
-                PropertyInfo[] infos = ReferringObject.GetType().GetProperties();
+                PropertyInfo[] infos = ReferringObject.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
                 object item = (this as IVersionItem).Item;
                 if (item == null)
@@ -143,7 +143,7 @@ namespace Kiss.Linq
         {
             Type sourceType = sourceObject.GetType();
 
-            PropertyInfo[] infos = sourceType.GetProperties();
+            PropertyInfo[] infos = sourceType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
             foreach (PropertyInfo info in infos)
             {
@@ -177,7 +177,7 @@ namespace Kiss.Linq
         /// <returns></returns>
         public Bucket FillBucket(Bucket bucket)
         {
-            PropertyInfo[] infos = ReferringObject.GetType().GetProperties();
+            PropertyInfo[] infos = ReferringObject.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
             foreach (PropertyInfo info in infos)
             {

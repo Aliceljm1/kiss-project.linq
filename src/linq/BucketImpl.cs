@@ -147,7 +147,7 @@ namespace Kiss.Linq
 
         private IDictionary<string, BucketItem> CreateItems ( Type targetType )
         {
-            PropertyInfo[] infos = targetType.GetProperties ( );
+            PropertyInfo[] infos = targetType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
             IDictionary<string, BucketItem> list = new Dictionary<string, BucketItem> ( );
 

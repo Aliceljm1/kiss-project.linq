@@ -21,7 +21,7 @@ namespace Kiss.Linq
                 //clone the result.
                 object runningObject = Activator.CreateInstance(runningType);
 
-                PropertyInfo[] infos = runningType.GetProperties();
+                PropertyInfo[] infos = runningType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
                 
                 int index = 0;
 
@@ -100,7 +100,7 @@ namespace Kiss.Linq
         /// <param name="destination"></param>
         public static void CopyRecursive(this object source , object destination)
         {
-            PropertyInfo[] sourceProperties = source.GetType().GetProperties();
+            PropertyInfo[] sourceProperties = source.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
             Type destType = destination.GetType();
 
@@ -213,7 +213,7 @@ namespace Kiss.Linq
         {
             bool equal = true;
 
-            PropertyInfo[] infos = obj1.GetType().GetProperties();
+            PropertyInfo[] infos = obj1.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
             foreach (PropertyInfo info in infos)
             {

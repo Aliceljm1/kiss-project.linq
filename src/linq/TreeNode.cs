@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Kiss.Linq
 {
@@ -34,9 +35,9 @@ namespace Kiss.Linq
         {
             get
             {
-                if ( nodes == null )
+                if (nodes == null)
                 {
-                    nodes = new List<Node> ( );
+                    nodes = new List<Node>();
                 }
                 return nodes;
             }
@@ -52,9 +53,9 @@ namespace Kiss.Linq
         {
             get
             {
-                if ( Nodes.Count > 0 )
+                if (Nodes.Count > 0)
                 {
-                    return Nodes[ 0 ];
+                    return Nodes[0];
                 }
                 return null;
             }
@@ -66,9 +67,9 @@ namespace Kiss.Linq
         {
             get
             {
-                if ( Nodes.Count > 1 )
+                if (Nodes.Count > 1)
                 {
-                    return Nodes[ 1 ];
+                    return Nodes[1];
                 }
                 return null;
             }
@@ -83,7 +84,7 @@ namespace Kiss.Linq
         {
             get
             {
-                if ( Right != null )
+                if (Right != null)
                     return RootImpl;
                 // for single item should return NONE.
                 return OperatorType.NONE;
@@ -93,15 +94,15 @@ namespace Kiss.Linq
         /// Clones the tree node.
         /// </summary>
         /// <returns>clonned <see cref="TreeNode"/></returns>
-        public TreeNode Clone ( )
+        public TreeNode Clone()
         {
-            var clonned = Activator.CreateInstance<TreeNode> ( );
+            var clonned = Activator.CreateInstance<TreeNode>();
 
-            foreach ( var node in this.GetType ( ).GetProperties ( ) )
+            foreach (var node in this.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
-                if ( node.CanWrite )
+                if (node.CanWrite)
                 {
-                    node.SetValue ( clonned, node.GetValue ( this, null ), null );
+                    node.SetValue(clonned, node.GetValue(this, null), null);
                 }
             }
             return clonned;
