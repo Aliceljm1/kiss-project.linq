@@ -164,22 +164,6 @@ namespace Kiss.Linq.Sql
 
         #endregion
 
-        private ConnectionStringSettings _connectionStringSettings;
-        public ConnectionStringSettings ConnectionStringSettings
-        {
-            get
-            {
-                if (_connectionStringSettings == null)
-                    throw new LinqException("connectionString is not set!");
-
-                return _connectionStringSettings;
-            }
-            set
-            {
-                _connectionStringSettings = value;
-            }
-        }
-
         private SqlQuery<T> _query;
 
         public ILinqQuery<T> Query
@@ -306,7 +290,7 @@ namespace Kiss.Linq.Sql
         public void Start()
         {
             CreatedEventArgs e = new CreatedEventArgs();
-            e.ConnectionStringSettings = _connectionStringSettings;
+            e.ConnectionStringSettings = ConnectionStringSettings;
 
             OnCreated(e);
 
@@ -318,6 +302,8 @@ namespace Kiss.Linq.Sql
 
     public class Repository
     {
+        public ConnectionStringSettings ConnectionStringSettings { get; set; }
+
         public static event EventHandler<CreatedEventArgs> Created;
 
         protected virtual void OnCreated(CreatedEventArgs e)

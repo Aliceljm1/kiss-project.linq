@@ -100,5 +100,42 @@ namespace Kiss.Linq.Sql.DataBase
         public string Name { get; set; }
 
         public string Type { get; set; }
+
+        public string Desc { get; set; }
+
+        public string NetTypeString
+        {
+            get
+            {
+                string sqlType = Type;
+
+                if (sqlType.Equals("bigint")) return "long";
+                if (sqlType.Equals("int")) return "int";
+                if (sqlType.Equals("smallint")) return "short";
+                if (sqlType.Equals("tinyint")) return "byte";
+                if (sqlType.Equals("bit")) return "bool";
+                if (sqlType.Equals("decimal")) return "System.Decimal";
+                if (sqlType.Equals("numeric")) return "System.Decimal";
+                if (sqlType.Equals("money")) return "System.Decimal";
+                if (sqlType.Equals("smallmoney")) return "System.Decimal";
+                if (sqlType.Equals("float")) return "float";
+                if (sqlType.Equals("real")) return "double";
+                if (sqlType.Equals("datetime")) return "DateTime";
+                if (sqlType.Equals("smalldatetime")) return "DateTime";
+                if (sqlType.Equals("varchar")) return "string";
+                if (sqlType.Equals("nchar")) return "string";
+                if (sqlType.Equals("char")) return "string";
+                if (sqlType.Equals("text")) return "string";
+                if (sqlType.Equals("nvarchar")) return "string";
+                if (sqlType.Equals("ntext")) return "string";
+                if (sqlType.Equals("binary")) return "byte[]";
+                if (sqlType.Equals("varbinary")) return "byte[]";
+                if (sqlType.Equals("image")) return "byte[]";
+                if (sqlType.Equals("timestamp")) return "long";
+                if (sqlType.Equals("uniqueidentifier")) return "Guid";
+                if (sqlType.Equals("xml")) return "string";
+                throw new Exception("Unexpected data type: " + sqlType);
+            }
+        }
     }
 }
