@@ -35,7 +35,6 @@ namespace Kiss.Linq.Sql.DataBase
             {
                 handler(this, e);
             }
-
         }
 
         public class QueryEventArgs : EventArgs
@@ -74,24 +73,43 @@ namespace Kiss.Linq.Sql.DataBase
 
                 connstring = connectionStringSettings.ConnectionString;
 
-                DDLPlugin ddl = null;
+                PluginSetting ddlconfig = PluginSettings.Get<DataBaseInitializer>();
+                if (ddlconfig == null)
+                    return;
 
-                try
-                {
-                    if (PluginSettings.Get<DataBaseInitializer>()["ddl"].ToBoolean())
-                        ddl = ServiceLocator.Instance.Resolve<DDLPlugin>();
-                }
-                catch
-                {
-                    logger.Info("ddl is disabled.");
-                }
-                if (ddl != null)
-                    ddl.Sync(dbAccess as IDDL, modelType, connectionStringSettings);
+                if (is_ddlallowed(StringUtil.Split(ddlconfig["ddl_types"], StringUtil.Comma, true, true), modelType.Name))
+                    ServiceLocator.Instance.Resolve<DDLPlugin>().Sync(dbAccess as IDDL, modelType, connectionStringSettings);
             }
             catch (Exception ex)
             {
                 throw new LinqException("init DatabaseContext failed!", ex);
             }
+        }
+
+        private bool is_ddlallowed(string[] allowed, string type)
+        {
+            if (allowed.Length == 0)
+                return false;
+
+            foreach (var item in allowed)
+            {
+                if (item == "*")
+                    return true;
+
+                if (item.StartsWith("*") && type.EndsWith(item.Substring(1), StringComparison.InvariantCultureIgnoreCase))
+                    return true;
+
+                if (item.EndsWith("*") && type.StartsWith(item.Substring(0, item.Length - 1), StringComparison.InvariantCultureIgnoreCase))
+                    return true;
+
+                if (item.StartsWith("*") && item.EndsWith("*") && type.ToLower().Contains(item.Substring(1, item.Length - 1).ToLower()))
+                    return true;
+
+                if (string.Equals(item, type))
+                    return true;
+            }
+
+            return false;
         }
 
         public int ExecuteNonQuery(CommandType cmdType, string sql)

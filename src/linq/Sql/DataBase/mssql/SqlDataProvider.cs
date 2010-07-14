@@ -82,7 +82,8 @@ namespace Kiss.Linq.Sql.DataBase
         {
             string where = query.WhereClause;
 
-            string sql = string.Format("Select ISNULL(COUNT(*),0) FROM {0} {1}",
+            string sql = string.Format("Select ISNULL(COUNT({0}),0) FROM {1} {2}",
+                query.TableField.Contains(",") ? "*" : query.TableField,
                 query.TableName,
                 query.AppendWhereKeyword && StringUtil.HasText(where) ? where.Insert(0, "where ") : where);
 
@@ -144,7 +145,7 @@ namespace Kiss.Linq.Sql.DataBase
 
             logger.Debug(sql);
 
-            return SqlHelper.ExecuteReader(query.ConnectionString,
+            return ExecuteReader(query.ConnectionString,
                     CommandType.Text,
                     sql);
         }
@@ -360,7 +361,7 @@ namespace Kiss.Linq.Sql.DataBase
 
             sql += string.Format("[{0}] {1}", item.Name, GetDbType(item.PropertyType));
 
-            if (item.FindAttribute(typeof(UniqueIdentifierAttribute)) != null)
+            if (item.FindAttribute(typeof(PKAttribute)) != null)
             {
                 sql += " ";
                 sql += "NOT NULL IDENTITY(1,1)";

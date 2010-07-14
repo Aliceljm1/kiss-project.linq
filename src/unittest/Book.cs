@@ -3,19 +3,19 @@ using Kiss;
 
 namespace Kiss.Linq.Linq2Sql.Test
 {
-    [OriginalEntityName ( "book" )]
-    public class Book : IQueryObject
+    [OriginalName("book")]
+    public class Book : QueryObject<Book, int>
     {
         public string Author { get; set; }
 
-        [OriginalFieldName ( "Bk_Title" )]
+        [OriginalName("Bk_Title")]
         public string Title { get; set; }
 
         public string ISBN { get; set; }
 
         public DateTime LastUpdated { get; set; }
 
-        [OriginalFieldName ( "Shelve_Id" )]
+        [OriginalName("Shelve_Id")]
         public int ShelveId { get; set; }
 
         [Ignore]
@@ -30,10 +30,10 @@ namespace Kiss.Linq.Linq2Sql.Test
         /// <summary>
         /// Identity inherits Unique Attribute, these will be useful for update query.
         /// </summary>
-        [UniqueIdentifier, OriginalFieldName ( "Bk_Id" )]
-        public int Id { get; set; }
+        [PK, OriginalName("Bk_Id")]
+        override public int Id { get; set; }
 
-        public int GetId ( )
+        public int GetId()
         {
             return Id;
         }

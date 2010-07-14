@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using Kiss.Linq;
 
 namespace Kiss.Linq.Sql.DataBase

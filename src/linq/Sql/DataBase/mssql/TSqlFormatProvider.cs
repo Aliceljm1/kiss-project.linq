@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Kiss.Linq.Fluent;
+using Kiss.Utils;
 
 namespace Kiss.Linq.Sql
 {
@@ -51,7 +52,7 @@ namespace Kiss.Linq.Sql
 
         public virtual string AddItemFormat()
         {
-            return @"INSERT INTO [${Entity}] ( ${TobeInsertedFields}) VALUES (${TobeInsertedValues}); SELECT * FROM [${Entity}] WHERE ${UniqueItem} = @@IDENTITY";
+            return @"INSERT INTO [${Entity}] ( ${TobeInsertedFields}) VALUES (${TobeInsertedValues}); SELECT * FROM [${Entity}] ${AfterInsertWhere}";
         }
 
         public virtual string BatchAddItemFormat()
@@ -111,13 +112,11 @@ namespace Kiss.Linq.Sql
             List<string> list = new List<string>();
 
             FluentBucket.As(bucket).For.EachItem
-                .Match(delegate(BucketItem item)
+                .Process(delegate(BucketItem item)
                 {
-                    return item.Unique == false;
-                }).Process(delegate(BucketItem item)
-                {
-                    if (HasValue(item.Value))
-                        list.Add(string.Format("[{0}]", item.Name));
+                    if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoIncrement)
+                        if (HasValue(item.Value))
+                            list.Add(string.Format("[{0}]", item.Name));
                 });
 
             return string.Join(",", list.ToArray());
@@ -127,15 +126,11 @@ namespace Kiss.Linq.Sql
         {
             StringBuilder builder = new StringBuilder();
             FluentBucket.As(bucket).For.EachItem
-               .Match(delegate(BucketItem item)
+               .Process(delegate(BucketItem item)
                {
-                   return item.Unique == false;
-               }).Process(delegate(BucketItem item)
-               {
-                   if (HasValue(item.Value))
-                   {
-                       builder.Append(GetValue(item.Value) + ",");
-                   }
+                   if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoIncrement)
+                       if (HasValue(item.Value))
+                           builder.Append(GetValue(item.Value) + ",");
                });
 
             builder.Remove(builder.Length - 1, 1);
@@ -179,15 +174,15 @@ namespace Kiss.Linq.Sql
             FluentBucket.As(bucket).For.EachItem
                 .Process(delegate(BucketItem item)
                 {
-                    if (item.Unique)
+                    if (item.Unique && item.Value != null)
                     {
-                        if (item.Value != null)
-                        {
-                            string value = GetValue(item.Value);
-                            builder.Append(item.Name + RelationalOperators[item.RelationType] + value + " AND");
-                        }
+                        string value = GetValue(item.Value);
+                        builder.Append(item.Name + RelationalOperators[item.RelationType] + value + " AND");
                     }
                 });
+
+            if (builder.Length == 0)
+                throw new LinqException(string.Format("类 {0} 未定义PKAttribute", bucket.Name));
 
             builder.Remove(builder.Length - 3, 3);
 
@@ -196,7 +191,31 @@ namespace Kiss.Linq.Sql
 
         public string DefineUniqueItem()
         {
-            return FluentBucket.As(bucket).Entity.UniqueAttribte;
+            string attr = FluentBucket.As(bucket).Entity.UniqueAttribte;
+
+            if (StringUtil.IsNullOrEmpty(attr))
+                throw new LinqException(string.Format("类 {0} 未定义PKAttribute", bucket.Name));
+
+            return attr;
+        }
+
+        public virtual string DefineAfterInsertWhere()
+        {
+            string value = string.Empty;
+
+            FluentBucket.As(bucket).For.EachItem
+                .Process(delegate(BucketItem item)
+            {
+                if (item.Unique)
+                {
+                    if ((item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoIncrement)
+                        value = "WHERE [" + item.Name + "] = @@IDENTITY";
+                    else if (item.Value != null)
+                        value = "WHERE [" + item.Name + "] = " + GetValue(item.Value);
+                }
+            });
+
+            return value;
         }
 
         public virtual string DefinePageLength()
@@ -234,7 +253,7 @@ namespace Kiss.Linq.Sql
 
                             container.AppendFormat("[{0}] IN({1})", item.Name, string.Join(",", items.ToArray()));
                         }
-                        else
+                        else if (item.RelationType != RelationType.NotApplicable)
                         {
                             string value = GetValue(item.Value);
                             container.AppendFormat("[{0}] {1} {2}", item.Name, RelationalOperators[item.RelationType].ToString(), value);
@@ -373,6 +392,8 @@ namespace Kiss.Linq.Sql
                     return DefineSkip();
                 case "UpdateItems":
                     return DefineUpdateItems();
+                case "AfterInsertWhere":
+                    return DefineAfterInsertWhere();
                 case "UniqueWhere":
                     return DefineUniqueWhere();
                 case "UniqueItem":

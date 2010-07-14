@@ -286,27 +286,27 @@ namespace Kiss.Linq
             }
         }
 
-        /// <summary>
-        /// Sets the value to target object.
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public void SetValue ( object target, object value )
-        {
-            PropertyInfo info = target.GetType ( ).GetProperty ( ProperyName, this.propertyType );
-            if ( info != null ) info.SetValue ( target, value, null );
-        }
+        ///// <summary>
+        ///// Sets the value to target object.
+        ///// </summary>
+        ///// <param name="target"></param>
+        ///// <param name="value"></param>
+        ///// <returns></returns>
+        //public void SetValue ( object target, object value )
+        //{
+        //    PropertyInfo info = target.GetType ( ).GetProperty ( ProperyName, this.propertyType );
+        //    if ( info != null ) info.SetValue ( target, value, null );
+        //}
 
-        /// <summary>
-        /// Gets the value for a target object.
-        /// </summary>
-        /// <param name="target"></param>
-        public object GetValue ( object target )
-        {
-            PropertyInfo info = target.GetType ( ).GetProperty ( ProperyName, this.propertyType );
-            return info.GetValue ( target, null );
-        }
+        ///// <summary>
+        ///// Gets the value for a target object.
+        ///// </summary>
+        ///// <param name="target"></param>
+        //public object GetValue ( object target )
+        //{
+        //    PropertyInfo info = target.GetType ( ).GetProperty ( ProperyName, this.propertyType );
+        //    return info.GetValue ( target, null );
+        //}
 
         /// <summary>
         /// finds the attribute, within property

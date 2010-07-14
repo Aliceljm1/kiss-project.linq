@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
-using Kiss.Linq.Sql;
-using NUnit.Framework;
-using Kiss.Linq.Sql.DataBase;
 using Castle.Windsor;
+using Kiss.Linq.Sql;
+using Kiss.Linq.Sql.DataBase;
+using NUnit.Framework;
 
 namespace Kiss.Linq.Linq2Sql.Test
 {
@@ -19,6 +19,11 @@ namespace Kiss.Linq.Linq2Sql.Test
 
             ServiceLocator.Instance.AddComponent("System.Data.SqlClient", typeof(SqlDataProvider));
             ServiceLocator.Instance.AddComponent("System.Data.SQLite", typeof(SqliteDataProvider));
+
+            ServiceLocator.Instance.AddComponent("p", typeof(Kiss.Plugin.PluginBootstrapper));
+
+            ServiceLocator.Instance.AddComponent("kiss.repository_1", typeof(IRepository<>), typeof(Repository<>));
+            ServiceLocator.Instance.AddComponent("kiss.repository_2", typeof(IRepository<,>), typeof(Repository<,>));
 
             ConnectionStringSettings settings = ConfigurationManager.ConnectionStrings["sqlite"];
 
@@ -111,16 +116,40 @@ namespace Kiss.Linq.Linq2Sql.Test
         {
             this.Add();
 
-            string like = "%Don Box";
-
             var query = from book in bookContext
-                        where book.Author.Contains(like)
+                        where book.Author.Contains("Don Box")
                         select book;
+            
+            Assert.AreEqual(1, query.Count());
+
+            Book.ConnectionStringSettings = ConfigurationManager.ConnectionStrings["sqlite"]; ;
+
+            Assert.AreEqual(1, (from book in Book.Query
+                                where book.Author.Contains("Don Box")
+                                select book).Count());
 
             Assert.AreEqual(1, query.Count());
 
             query = from book in bookContext
-                    where book.Author.Contains("%Donx")
+                    where book.Author.StartsWith("Don")
+                    select book;
+
+            Assert.AreEqual(1, query.Count());
+
+            query = from book in bookContext
+                    where book.Author.EndsWith("Box")
+                    select book;
+
+            Assert.AreEqual(1, query.Count());
+
+            query = from book in bookContext
+                    where book.Author.EndsWith("Don")
+                    select book;
+
+            Assert.AreEqual(0, query.Count());
+
+            query = from book in bookContext
+                    where book.Author.Contains("Donx")
                     select book;
 
             Assert.AreEqual(0, query.Count());
@@ -416,6 +445,12 @@ namespace Kiss.Linq.Linq2Sql.Test
                     select book;
 
             Assert.AreEqual(query.Count(), 2);
+
+            //query = from book in bookContext
+            //        where new List<string>().Contains(book.Author)
+            //        select book;
+
+            //Assert.AreEqual(query.Count(), 0);
         }
 
         [Test]

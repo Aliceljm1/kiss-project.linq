@@ -6,10 +6,10 @@ using Kiss.Linq;
 
 namespace Kiss.Linq.Linq2Sql.Test
 {
-    [OriginalEntityName("Bk_Library")]
+    [OriginalName("Bk_Library")]
     class Library : IQueryObject
     {
-        [UniqueIdentifier]
+        [PK]
         public int Id { get; set; }
         public string Floor
         {

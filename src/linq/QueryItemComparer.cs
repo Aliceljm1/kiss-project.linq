@@ -17,8 +17,8 @@ namespace Kiss.Linq
 
         int IComparer<T>.Compare(T x, T y)
         {
-            PropertyInfo prop1 = x.ReferringObject.GetType().GetProperty(orderByField);
-            PropertyInfo prop2 = y.ReferringObject.GetType().GetProperty(orderByField);
+            PropertyInfo prop1 = x.ReferringObject.GetType().GetProperty(orderByField, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            PropertyInfo prop2 = y.ReferringObject.GetType().GetProperty(orderByField, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
           
             if (prop1 != null && prop2 != null)
             {

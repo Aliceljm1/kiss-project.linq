@@ -30,7 +30,26 @@ namespace Kiss.Linq.Sql
 
         public override string AddItemFormat()
         {
-            return @"INSERT INTO [${Entity}] ( ${TobeInsertedFields}) VALUES (${TobeInsertedValues}); SELECT * FROM [${Entity}] WHERE ${UniqueItem} = last_insert_rowid();";
+            return @"INSERT INTO [${Entity}] ( ${TobeInsertedFields}) VALUES (${TobeInsertedValues}); SELECT * FROM [${Entity}] ${AfterInsertWhere};";
+        }
+
+        public override string DefineAfterInsertWhere()
+        {
+            string value = string.Empty;
+
+            FluentBucket.As(bucket).For.EachItem
+                .Process(delegate(BucketItem item)
+                {
+                    if (item.Unique)
+                    {
+                        if ((item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoIncrement)
+                            value = "WHERE [" + item.Name + "] = last_insert_rowid()";
+                        else if (item.Value != null)
+                            value = "WHERE [" + item.Name + "] = " + GetValue(item.Value);
+                    }
+                });
+
+            return value;
         }
 
         public override string GetDateTimeValue(DateTime dt)

@@ -14,25 +14,25 @@ namespace Kiss.Linq
         internal static IDictionary<string, object> GetUniqueItemDefaultDetail(this IQueryObject obj)
         {
             Type runningType = obj.GetType();
-           
+
             if (!uniqueDefaultValueObjectMap.ContainsKey(runningType.Name))
             {
                 IDictionary<string, object> uniqueDefaultValues = new Dictionary<string, object>();
                 //clone the result.
                 object runningObject = Activator.CreateInstance(runningType);
 
-                PropertyInfo[] infos = runningType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-                
+                PropertyInfo[] infos = runningType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
                 int index = 0;
 
                 foreach (PropertyInfo info in infos)
                 {
-                    object[] arg = info.GetCustomAttributes(typeof (UniqueIdentifierAttribute), true);
+                    object[] arg = info.GetCustomAttributes(typeof(PKAttribute), true);
 
                     if (arg != null && arg.Length > 0)
                     {
                         object value = info.GetValue(runningObject, null);
-                       
+
                         if (!uniqueDefaultValues.ContainsKey(info.Name))
                         {
                             uniqueDefaultValues.Add(info.Name, new { Index = index, Value = value });
@@ -71,7 +71,7 @@ namespace Kiss.Linq
             }
             return uExp;
         }
-       
+
         /// <summary>
         /// tries to combine the values for a give a type . Ex User defined clasee
         /// and its properties.
@@ -88,7 +88,7 @@ namespace Kiss.Linq
             foreach (var condition in list)
             {
                 condition.Value.CopyRecursive(combinedObject);
-                index ++;
+                index++;
             }
             return combinedObject;
         }
@@ -98,7 +98,7 @@ namespace Kiss.Linq
         /// </summary>
         /// <param name="source"></param>
         /// <param name="destination"></param>
-        public static void CopyRecursive(this object source , object destination)
+        public static void CopyRecursive(this object source, object destination)
         {
             PropertyInfo[] sourceProperties = source.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
@@ -106,12 +106,12 @@ namespace Kiss.Linq
 
             foreach (PropertyInfo prop in sourceProperties)
             {
-                    
+
                 if (prop.PropertyType.IsClass && !(prop.PropertyType.FullName.IndexOf("System") >= 0))
                 {
                     object value = prop.GetValue(source, null);
 
-                    PropertyInfo destProp = destType.GetProperty(prop.Name);
+                    PropertyInfo destProp = destType.GetProperty(prop.Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
                     object destValue = destProp.GetValue(destination, null);
 
@@ -141,24 +141,24 @@ namespace Kiss.Linq
                 {
                     bool isDefault = false;
 
-                    object destValue = destType.GetProperty(prop.Name).GetValue(destination, null);
+                    object destValue = destType.GetProperty(prop.Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).GetValue(destination, null);
 
                     if (destValue != null)
                     {
                         object tempObject = Activator.CreateInstance(destType);
-                        object tempValue = tempObject.GetType().GetProperty(prop.Name).GetValue(tempObject, null);
+                        object tempValue = tempObject.GetType().GetProperty(prop.Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).GetValue(tempObject, null);
                         isDefault = tempValue.Equals(destValue);
                     }
 
                     if (destValue == null || isDefault)
                     {
-                        destType.GetProperty(prop.Name).SetValue(destination, prop.GetValue(source, null), null);
+                        destType.GetProperty(prop.Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).SetValue(destination, prop.GetValue(source, null), null);
                     }
                 }
             }
         }
 
-        private static IDictionary<string, object > _queryClases = new Dictionary<string, object>();
+        private static IDictionary<string, object> _queryClases = new Dictionary<string, object>();
 
         public static IQueryProvider GetQueryClass<T>(this T objectBase) where T : IQueryProvider
         {
@@ -177,12 +177,12 @@ namespace Kiss.Linq
 
             UnaryExpression unaryExpression = GetUnaryExpressionFromMethodCall(expression);
             LambdaExpression lambdaExpression = unaryExpression.Operand as LambdaExpression;
-            
+
             // get the value by dynamic invocation, used for getting value for MemberType expression.
             value = Expression.Lambda(lambdaExpression.Body).Compile().DynamicInvoke();
             return value;
         }
-        
+
         public static object InvokeMethod(string methodName, Type itemType, object obj)
         {
             MemberInfo[] memInfos = itemType.GetMembers();
@@ -238,14 +238,14 @@ namespace Kiss.Linq
         {
             string fieldName = string.Empty;
 
-            object[] arg = info.GetCustomAttributes(typeof(OriginalFieldNameAttribute), true);
+            object[] arg = info.GetCustomAttributes(typeof(OriginalNameAttribute), true);
 
             if (arg != null && arg.Length > 0)
             {
-                var fieldNameAttr = arg[0] as OriginalFieldNameAttribute;
-                
-                if (fieldNameAttr != null) 
-                    fieldName = fieldNameAttr.FieldName;
+                var fieldNameAttr = arg[0] as OriginalNameAttribute;
+
+                if (fieldNameAttr != null)
+                    fieldName = fieldNameAttr.Name;
             }
             else
             {
@@ -261,32 +261,32 @@ namespace Kiss.Linq
         /// <typeparam name="T"></typeparam>
         /// <param name="expression"></param>
         /// <returns><see cref="MemberInfo"/></returns>
-        internal static MemberInfo GetMemberFromExpression<T> ( this Expression<Func<T, object>> expression )
+        internal static MemberInfo GetMemberFromExpression<T>(this Expression<Func<T, object>> expression)
         {
-            if ( expression.Body is MemberExpression )
+            if (expression.Body is MemberExpression)
             {
-                MemberExpression memberExpression = ( MemberExpression ) expression.Body;
+                MemberExpression memberExpression = (MemberExpression)expression.Body;
                 return memberExpression.Member;
             }
             else
             {
-                UnaryExpression unaryExpression = ( UnaryExpression ) expression.Body;
+                UnaryExpression unaryExpression = (UnaryExpression)expression.Body;
 
-                if ( unaryExpression.Operand is MemberExpression )
+                if (unaryExpression.Operand is MemberExpression)
                 {
-                    MemberExpression memberExpression = ( MemberExpression ) unaryExpression.Operand;
+                    MemberExpression memberExpression = (MemberExpression)unaryExpression.Operand;
                     return memberExpression.Member;
                 }
             }
             return null;
         }
 
-        internal static bool EqualsDefault ( this object targetValue, string propertyName, object source )
+        internal static bool EqualsDefault(this object targetValue, string propertyName, object source)
         {
-            if ( targetValue != null && ( targetValue.GetType ( ).IsPrimitive || targetValue.GetType ( ).IsEnum ) )
+            if (targetValue != null && (targetValue.GetType().IsPrimitive || targetValue.GetType().IsEnum))
             {
-                object @default = Activator.CreateInstance ( source.GetType ( ) );
-                return @default.GetType ( ).GetProperty ( propertyName ).GetValue ( @default, null ).Equals ( targetValue );
+                object @default = Activator.CreateInstance(source.GetType());
+                return @default.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).GetValue(@default, null).Equals(targetValue);
             }
             return false;
         }

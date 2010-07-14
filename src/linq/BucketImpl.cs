@@ -10,20 +10,20 @@ namespace Kiss.Linq
         /// <summary>
         /// Creates a new instance of <see cref="BucketImpl"/> class.
         /// </summary>
-        public BucketImpl ( ) { }
+        public BucketImpl() { }
 
         /// <summary>
         /// Creates a new instance of <see cref="BucketImpl"/> class.
         /// </summary>
         /// <param name="targetType"></param>
-        public BucketImpl ( Type targetType )
+        public BucketImpl(Type targetType)
         {
             this.targetType = targetType;
         }
 
-        static internal BucketImpl NewInstance ( Type targetType )
+        static internal BucketImpl NewInstance(Type targetType)
         {
-            return new BucketImpl ( targetType );
+            return new BucketImpl(targetType);
         }
         /// <summary>
         /// marks if the bucket is already prepared or not.
@@ -47,22 +47,22 @@ namespace Kiss.Linq
         /// </summary>
         internal int Level { get; set; }
 
-        public BucketImpl Describe ( )
+        public BucketImpl Describe()
         {
-            object[] attr = targetType.GetCustomAttributes ( typeof ( OriginalEntityNameAttribute ), true );
-            if ( attr != null && attr.Length > 0 )
+            object[] attr = targetType.GetCustomAttributes(typeof(OriginalNameAttribute), true);
+            if (attr != null && attr.Length > 0)
             {
-                OriginalEntityNameAttribute originalEntityNameAtt = attr[ 0 ] as OriginalEntityNameAttribute;
-                if ( originalEntityNameAtt != null ) this.Name = originalEntityNameAtt.EntityName;
+                OriginalNameAttribute originalEntityNameAtt = attr[0] as OriginalNameAttribute;
+                if (originalEntityNameAtt != null) this.Name = originalEntityNameAtt.Name;
             }
             else
             {
                 Name = targetType.Name;
             }
             // clear out;
-            Clear ( );
+            Clear();
 
-            Items = CreateItems ( targetType );
+            Items = CreateItems(targetType);
 
             return this;
         }
@@ -71,8 +71,8 @@ namespace Kiss.Linq
         {
             get
             {
-                if ( syntaxStack == null )
-                    syntaxStack = new Stack<TreeNodeInfo> ( );
+                if (syntaxStack == null)
+                    syntaxStack = new Stack<TreeNodeInfo>();
 
                 return syntaxStack;
             }
@@ -99,7 +99,7 @@ namespace Kiss.Linq
             {
                 RelationType relType = RelationType.Equal;
 
-                switch ( CurrentExpessionType )
+                switch (CurrentExpessionType)
                 {
                     case ExpressionType.Equal:
                         relType = RelationType.Equal;
@@ -128,9 +128,9 @@ namespace Kiss.Linq
         /// <summary>
         /// clear outs the data.
         /// </summary>
-        protected new void Clear ( )
+        protected new void Clear()
         {
-            base.Clear ( );
+            base.Clear();
 
             ClauseItemCount = 0;
             CurrentExpessionType = ExpressionType.Equal;
@@ -145,51 +145,51 @@ namespace Kiss.Linq
             }
         }
 
-        private IDictionary<string, BucketItem> CreateItems ( Type targetType )
+        private IDictionary<string, BucketItem> CreateItems(Type targetType)
         {
-            PropertyInfo[] infos = targetType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            PropertyInfo[] infos = targetType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
-            IDictionary<string, BucketItem> list = new Dictionary<string, BucketItem> ( );
+            IDictionary<string, BucketItem> list = new Dictionary<string, BucketItem>();
 
-            foreach ( PropertyInfo info in infos )
+            foreach (PropertyInfo info in infos)
             {
                 string fieldName = string.Empty;
 
                 // assume the property is not unique.
                 bool isUnique = false;
 
-                object[] arg = info.GetCustomAttributes ( typeof ( IgnoreAttribute ), false );
+                object[] arg = info.GetCustomAttributes(typeof(IgnoreAttribute), true);
 
-                if ( arg.Length == 0 )
+                if (arg.Length == 0)
                 {
                     const bool visible = true;
 
-                    arg = info.GetCustomAttributes ( typeof ( OriginalFieldNameAttribute ), false );
+                    arg = info.GetCustomAttributes(typeof(OriginalNameAttribute), true);
 
-                    if ( arg.Length > 0 )
+                    if (arg.Length > 0)
                     {
-                        var fieldNameAttr = arg[ 0 ] as OriginalFieldNameAttribute;
+                        var fieldNameAttr = arg[0] as OriginalNameAttribute;
 
-                        if ( fieldNameAttr != null )
-                            fieldName = fieldNameAttr.FieldName;
+                        if (fieldNameAttr != null)
+                            fieldName = fieldNameAttr.Name;
                     }
                     else
                     {
                         fieldName = info.Name;
                     }
 
-                    arg = info.GetCustomAttributes ( typeof ( UniqueIdentifierAttribute ), false );
+                    arg = info.GetCustomAttributes(typeof(PKAttribute), true);
 
-                    if ( arg.Length > 0 )
+                    if (arg.Length > 0)
                     {
                         isUnique = true;
                     }
 
                     // only if not already added.
-                    if ( !list.ContainsKey ( info.Name ) )
+                    if (!list.ContainsKey(info.Name))
                     {
-                        var newItem = new BucketItem ( targetType, fieldName, info.Name, info.PropertyType, null, isUnique, RelationType.Equal, visible ) { };
-                        list.Add ( info.Name, newItem );
+                        var newItem = new BucketItem(targetType, fieldName, info.Name, info.PropertyType, null, isUnique, RelationType.Equal, visible) { };
+                        list.Add(info.Name, newItem);
                     }
                 }
             }
@@ -202,7 +202,7 @@ namespace Kiss.Linq
 
     internal class BucketImpl<T> : BucketImpl
     {
-        public BucketImpl ( ) : base ( typeof ( T ) ) { }
+        public BucketImpl() : base(typeof(T)) { }
 
         #region Fluent BucketImpl
 
@@ -210,7 +210,7 @@ namespace Kiss.Linq
         {
             get
             {
-                return new BucketImpl<T> ( );
+                return new BucketImpl<T>();
             }
         }
 

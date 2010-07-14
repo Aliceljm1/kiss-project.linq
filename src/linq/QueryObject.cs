@@ -1,17 +1,4 @@
-﻿#region File Comment
-//+-------------------------------------------------------------------+
-//+ File Created:   2009-05-14
-//+-------------------------------------------------------------------+
-//+ History:
-//+-------------------------------------------------------------------+
-//+ 2009-05-14		zhli fix a bug in property IsNewlyAdded 
-//+                      remove try{}catch{} in property IsAltered                         
-//+-------------------------------------------------------------------+
-//+ 2009-09-03		zhli FillProperties method ingone property with Ingore attribute                       
-//+-------------------------------------------------------------------+
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -22,11 +9,18 @@ namespace Kiss.Linq
         internal object ReferringObject { get; set; }
     }
 
-    public sealed class QueryObject<T> : QueryObject, IVersionItem, IQueryObjectImpl where T : IQueryObject
+    public sealed class QueryObject<T> : QueryObject, IVersionItem, IQueryObjectImpl where T : IQueryObject, new()
     {
         public QueryObject(T baseObject)
         {
             ReferringObject = baseObject;
+            this.isNew = null;
+        }
+
+        public QueryObject(T baseObject, bool isNew)
+        {
+            ReferringObject = baseObject;
+            this.isNew = isNew;
         }
 
         #region Tracking properties
@@ -43,7 +37,7 @@ namespace Kiss.Linq
         {
             get
             {
-                PropertyInfo[] infos = ReferringObject.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                PropertyInfo[] infos = ReferringObject.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
                 object item = (this as IVersionItem).Item;
                 if (item == null)
@@ -51,13 +45,13 @@ namespace Kiss.Linq
 
                 foreach (PropertyInfo info in infos)
                 {
-                    object[] attr = info.GetCustomAttributes(typeof(IgnoreAttribute), true);
+                    object[] attr = info.GetCustomAttributes(typeof(IgnoreAttribute), false);
                     if (attr.Length > 0 || !info.CanWrite)
                         continue;
 
                     object source = info.GetValue(ReferringObject, null);
 
-                    PropertyInfo targetInfo = item.GetType().GetProperty(info.Name);
+                    PropertyInfo targetInfo = item.GetType().GetProperty(info.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
                     object target = targetInfo.GetValue(item, null);
 
@@ -78,12 +72,18 @@ namespace Kiss.Linq
         {
             get
             {
+                if (isNew != null)
+                    return isNew.Value;
+
                 /// Loads the uniqueKey mapping from extention method.                
                 IDictionary<string, object> uniqueDefaultValues = ReferringObject.GetUniqueItemDefaultDetail();
 
+                Type type = typeof(T);
+
                 foreach (string key in uniqueDefaultValues.Keys)
                 {
-                    PropertyInfo info = typeof(T).GetProperty(key);
+                    PropertyInfo info = type.GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+
                     /// create a hollow anonymous type and cast with result.
                     var item = QueryExtension.Cast(uniqueDefaultValues[key], new { Index = 0, Value = default(object) });
 
@@ -95,7 +95,11 @@ namespace Kiss.Linq
                         isNew = obj.Equals(item.Value);
                     }
                 }
-                return isNew;
+                return isNew == null ? true : isNew.Value;
+            }
+            internal set
+            {
+                isNew = value;
             }
         }
 
@@ -127,7 +131,7 @@ namespace Kiss.Linq
         void IVersionItem.Commit()
         {
             //First we create an instance of this specific type.
-            mirrorObject = Activator.CreateInstance<T>();
+            mirrorObject = new T();
             FillProperties(ReferringObject, mirrorObject);
         }
 
@@ -143,7 +147,7 @@ namespace Kiss.Linq
         {
             Type sourceType = sourceObject.GetType();
 
-            PropertyInfo[] infos = sourceType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            PropertyInfo[] infos = sourceType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
             foreach (PropertyInfo info in infos)
             {
@@ -177,7 +181,7 @@ namespace Kiss.Linq
         /// <returns></returns>
         public Bucket FillBucket(Bucket bucket)
         {
-            PropertyInfo[] infos = ReferringObject.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            PropertyInfo[] infos = ReferringObject.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
             foreach (PropertyInfo info in infos)
             {
@@ -206,9 +210,9 @@ namespace Kiss.Linq
         /// <param name="value">the value of the property , retrived from property get accessor.</param>
         public void FillProperty(string name, object value)
         {
-            PropertyInfo info = ReferringObject.GetType().GetProperty(name);
+            PropertyInfo info = ReferringObject.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-            if (info.CanWrite)
+            if (info != null && info.CanWrite)
             {
                 info.SetValue(ReferringObject
                     , Convert.ChangeType(value, info.PropertyType)
@@ -236,6 +240,6 @@ namespace Kiss.Linq
         }
         #endregion
 
-        private bool isNew = true;
+        private bool? isNew = null;
     }
 }

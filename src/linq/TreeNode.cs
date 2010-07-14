@@ -98,7 +98,7 @@ namespace Kiss.Linq
         {
             var clonned = Activator.CreateInstance<TreeNode>();
 
-            foreach (var node in this.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            foreach (var node in this.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
             {
                 if (node.CanWrite)
                 {

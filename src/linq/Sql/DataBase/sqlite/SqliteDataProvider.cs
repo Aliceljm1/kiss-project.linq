@@ -1,25 +1,12 @@
-﻿#region File Comment
-//+-------------------------------------------------------------------+
-//+ FileName: 	    SqliteDataProvider.cs
-//+ File Created:   20080827
-//+-------------------------------------------------------------------+
-//+ Purpose:        
-//+-------------------------------------------------------------------+
-//+ History:
-//+-------------------------------------------------------------------+
-//+ 20080827        ZHLI Comment Created
-//+-------------------------------------------------------------------+
-#endregion
-
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
-using System.Collections.Generic;
-using Kiss.Query;
-using System;
-using Kiss.Utils;
 using System.Text;
 using Kiss.Linq.Fluent;
+using Kiss.Query;
+using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.DataBase
 {
@@ -92,7 +79,10 @@ namespace Kiss.Linq.Sql.DataBase
             {
                 conn.Open();
 
-                string sql = string.Format("select count(*) as count from {0}", condition.TableName);
+                string sql = string.Format("select count({0}) as count from {1}",
+                    condition.TableField.Contains(",") ? "*" : condition.TableField,
+                    condition.TableName);
+
                 if (condition.AppendWhereKeyword && !string.IsNullOrEmpty(where))
                     sql += string.Format(" where {0}", where);
                 else
@@ -127,7 +117,7 @@ namespace Kiss.Linq.Sql.DataBase
 
             if (condition.Paging)
             {
-                sql += string.Format(" limit {0},{1}", condition.PageSize * condition.PageIndex, condition.PageSize - 1);
+                sql += string.Format(" limit {0},{1}", condition.PageSize * condition.PageIndex, condition.PageSize);
             }
             else if (condition.TotalCount > 0)
             {
@@ -277,7 +267,7 @@ namespace Kiss.Linq.Sql.DataBase
 
         private string GenerateDeclaration(BucketItem item)
         {
-            if (item.FindAttribute(typeof(UniqueIdentifierAttribute)) != null)
+            if (item.FindAttribute(typeof(PKAttribute)) != null)
                 return string.Format("[{0}] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT", item.Name);
             else
                 return string.Format("[{0}] {1}", item.Name, GetDbType(item.PropertyType));

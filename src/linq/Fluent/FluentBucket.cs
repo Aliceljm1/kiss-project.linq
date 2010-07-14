@@ -61,7 +61,7 @@ namespace Kiss.Linq.Fluent
         public string Translate ( FormatMethod method, IFormatProvider formatProvider )
         {
             formatProvider.Initialize ( bucket );
-
+            
             string selectorString = GetFormatString ( method, formatProvider );
 
             StringBuilder builder = new StringBuilder ( selectorString );
@@ -111,7 +111,7 @@ namespace Kiss.Linq.Fluent
                 case FormatMethod.GetItem:
                     selectorString = formatProvider.GetItemFormat ( );
                     break;
-                case FormatMethod.AddItem:
+                case FormatMethod.AddItem:                    
                     selectorString = formatProvider.AddItemFormat ( );
                     break;
                 case FormatMethod.UpdateItem:

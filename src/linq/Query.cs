@@ -10,7 +10,7 @@ namespace Kiss.Linq
     ///<summary>
     /// Entry class for LINQ provider. Containter of the virtual methods that will be invoked on select, intsert, update, remove or get calls.
     ///</summary>
-    public class Query<T> : ExpressionVisitor, IModify<T>, IOrderedQueryable<T>, IDisposable, IQueryProvider where T : IQueryObject
+    public class Query<T> : ExpressionVisitor, IModify<T>, IOrderedQueryable<T>, IDisposable, IQueryProvider where T : IQueryObject, new()
     {
         /// <summary>
         /// Creates a new instance of <see cref="Query{T}"/> class.
@@ -319,6 +319,11 @@ namespace Kiss.Linq
             this.collection.Remove(value);
         }
 
+        public void Remove(IEnumerable<T> items)
+        {
+            this.collection.Remove(items);
+        }
+
         /// <summary>
         /// Addes a range of items to the collection.
         /// </summary>
@@ -350,6 +355,11 @@ namespace Kiss.Linq
         public void Add(T item)
         {
             this.collection.Add(item);
+        }
+
+        public void Add(T item, bool isNew)
+        {
+            this.collection.Add(item, isNew);
         }
 
         #region Tobe overriden methods
@@ -416,7 +426,7 @@ namespace Kiss.Linq
                     if (item.IsNewlyAdded)
                     {
                         e.Action = SaveAction.Insert;
-                        Obj.OnSaving(item.ReferringObject, e);
+                        Kiss.QueryObject.OnSaving(item.ReferringObject, e);
                         if (e.Cancel)
                             continue;
 
@@ -424,9 +434,10 @@ namespace Kiss.Linq
 
                         if (added)
                         {
+                            item.IsNewlyAdded = false;
                             // cache the item to track for update.
                             (item as IVersionItem).Commit();
-                            Obj.OnSaved(item.ReferringObject, SaveAction.Insert);
+                            Kiss.QueryObject.OnSaved(item.ReferringObject, SaveAction.Insert);
                         }
                         else
                         {
@@ -437,13 +448,13 @@ namespace Kiss.Linq
                     else if (item.IsDeleted)
                     {
                         e.Action = SaveAction.Delete;
-                        Obj.OnSaving(item.ReferringObject, e);
+                        Kiss.QueryObject.OnSaving(item.ReferringObject, e);
                         if (e.Cancel) continue;
 
                         if (PerformChange(bucket, item, this.RemoveItem))
                         {
                             tobeDeletedList.Add(item);
-                            Obj.OnSaved(item.ReferringObject, SaveAction.Delete);
+                            Kiss.QueryObject.OnSaved(item.ReferringObject, SaveAction.Delete);
                         }
                         else
                         {
@@ -453,13 +464,13 @@ namespace Kiss.Linq
                     else if (item.IsAltered)
                     {
                         e.Action = SaveAction.Update;
-                        Obj.OnSaving(item.ReferringObject, e);
+                        Kiss.QueryObject.OnSaving(item.ReferringObject, e);
                         if (e.Cancel) continue;
 
                         if (PerformChange(bucket, item, this.UpdateItem))
                         {
                             (item as IVersionItem).Commit();
-                            Obj.OnSaved(item.ReferringObject, SaveAction.Update);
+                            Kiss.QueryObject.OnSaved(item.ReferringObject, SaveAction.Update);
                         }
                         else
                         {
@@ -470,6 +481,8 @@ namespace Kiss.Linq
                 }
                 catch (Exception ex)
                 {
+                    Clear();
+                    (this as IDisposable).Dispose();
                     throw new LinqException(ex.Message, ex);
                 }
             }
@@ -587,17 +600,7 @@ namespace Kiss.Linq
                         }
                         else
                         {
-                            object[] attr = mExp.Member.GetCustomAttributes(typeof(OriginalFieldNameAttribute), true);
-
-                            if (attr != null && attr.Length > 0)
-                            {
-                                var fieldNameAtt = attr[0] as OriginalFieldNameAttribute;
-                                if (fieldNameAtt != null) orderBy = fieldNameAtt.FieldName;
-                            }
-                            else
-                            {
-                                orderBy = mExp.Member.Name;
-                            }
+                            orderBy = Buckets.Current.Items[mExp.Member.Name].Name;
                         }
 
                         if (!string.IsNullOrEmpty(orderBy))
@@ -773,7 +776,7 @@ namespace Kiss.Linq
             {
                 // method
                 string methodName = methodCallExpression.Method.Name;
-                if (methodName == "Contains")
+                if (methodName == "Contains" || methodName == "StartsWith" || methodName == "EndsWith")
                 {
                     bool islike = methodCallExpression.Object.NodeType == ExpressionType.MemberAccess &&
                         ((MemberExpression)methodCallExpression.Object).Expression.NodeType == ExpressionType.Parameter;
@@ -800,17 +803,35 @@ namespace Kiss.Linq
                                 Child = bucketImpl.Items[memberName].Child
                             };
 
-                            leafItem.Values.Add(new BucketItem.QueryCondition(val, RelationType.Like));
+                            string v = string.Empty;
+                            if (val != null)
+                                v = val.ToString();
+
+                            if (methodName == "StartsWith")
+                                v = string.Concat(v, "%");
+                            else if (methodName == "EndsWith")
+                                v = string.Concat("%", v);
+                            else
+                                v = string.Concat("%", v, "%");
+
+                            leafItem.Values.Add(new BucketItem.QueryCondition(v, RelationType.Like));
 
                             bucketImpl.CurrentTreeNode.Nodes.Add(new TreeNode.Node { Value = leafItem });
                         }
                     }
                     else
                     {
-                        var value = Expression.Lambda(methodCallExpression.Object).Compile().DynamicInvoke() as IEnumerable;
+                        var value = Expression.Lambda(methodCallExpression.Object).Compile().DynamicInvoke() as IList;
 
                         if (value != null)
                         {
+                            if (value.Count == 0)
+                            {
+                                Clear();
+                                (this as IDisposable).Dispose();
+                                throw new LinqException("list is empty.");
+                            }
+
                             var memberExpression = methodCallExpression.Arguments[0] as MemberExpression;
 
                             if (memberExpression != null)
@@ -890,7 +911,7 @@ namespace Kiss.Linq
                     targetType = targetType.DeclaringType;
                 }
 
-                PropertyInfo[] infos = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                PropertyInfo[] infos = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
                 targetProperty = FindTargetPropertyWhereUsed(infos, targetType);
 
@@ -898,7 +919,7 @@ namespace Kiss.Linq
 
                 if (targetProperty.CanWrite)
                 {
-                    PropertyInfo property = nestedObj.GetType().GetProperty(memberExpression.Member.Name);
+                    PropertyInfo property = nestedObj.GetType().GetProperty(memberExpression.Member.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
                     if (property == null)
                     {
@@ -906,7 +927,7 @@ namespace Kiss.Linq
                         object nestedChildObject = FindDeepObject(nestedObj, targetType, memberExpression.Member.Name);
 
                         nestedChildObject.GetType()
-                            .GetProperty(memberExpression.Member.Name)
+                            .GetProperty(memberExpression.Member.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
                             .SetValue(nestedChildObject, value, null);
 
                     }
@@ -921,7 +942,7 @@ namespace Kiss.Linq
             }
             else
             {
-                targetProperty = typeof(T).GetProperty(originalMembername);
+                targetProperty = typeof(T).GetProperty(originalMembername, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             }
 
             object[] attr = targetProperty.GetCustomAttributes(typeof(IgnoreAttribute), true);
@@ -970,7 +991,7 @@ namespace Kiss.Linq
             // try only if no properties found on the first step.
             foreach (PropertyInfo info in compositeProperties)
             {
-                return FindTargetPropertyWhereUsed(info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public), targetType);
+                return FindTargetPropertyWhereUsed(info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly), targetType);
             }
 
             return null;
@@ -978,7 +999,7 @@ namespace Kiss.Linq
 
         private static object FindDeepObject(object nestedObject, Type baseType, string propName)
         {
-            PropertyInfo[] infos = baseType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            PropertyInfo[] infos = baseType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
             foreach (var info in infos)
             {
@@ -988,7 +1009,7 @@ namespace Kiss.Linq
                 }
                 else
                 {
-                    if (info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public).Count() > 0)
+                    if (info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Count() > 0)
                     {
                         try
                         {
@@ -1048,7 +1069,7 @@ namespace Kiss.Linq
 
             if (current != null && nested)
             {
-                foreach (PropertyInfo property in info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                foreach (PropertyInfo property in info.PropertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
                 {
                     object targetValue = property.GetValue(value, null);
 
@@ -1161,6 +1182,9 @@ namespace Kiss.Linq
                 }
                 catch (Exception ex)
                 {
+                    // clear all
+                    Clear();
+                    (this as IDisposable).Dispose();
                     throw new LinqException(ex.Message, ex);
                 }
                 item.IsAlreadyProcessed = true;

@@ -26,18 +26,6 @@ namespace Kiss.Linq.Sql.DataBase
                 {
                     if (!ddl_status.Contains(key))
                     {
-                        Type baseType = typeof(IQueryObject);
-
-                        List<Type> ddlTypes = new List<Type>();
-
-                        foreach (Type type in objtype.Assembly.GetTypes())
-                        {
-                            if (type.IsAbstract || type.GetInterface(baseType.Name) != baseType)
-                                continue;
-
-                            ddlTypes.Add(type);
-                        }
-
                         try
                         {
                             Database db = new Database(ddl, css.ConnectionString);
@@ -47,16 +35,12 @@ namespace Kiss.Linq.Sql.DataBase
                             // get db's table and column
                             db.Fill();
 
-                            // get sql
-                            foreach (Type type in ddlTypes)
-                            {
-                                sql.Append(db.GenerateSql(type));
-                            }
+                            sql.Append(db.GenerateSql(objtype));
 
                             // execute sql
                             db.Execute(sql.ToString());
 
-                            LogManager.GetLogger<DDLPlugin>().Info("sync database table schema ok.", objtype.Assembly.GetName().Name);
+                            LogManager.GetLogger<DDLPlugin>().Info("sync table schema of {0} ok.", objtype.Name);
                         }
                         catch (Exception ex)
                         {
@@ -64,12 +48,8 @@ namespace Kiss.Linq.Sql.DataBase
                         }
                         finally
                         {
-                            foreach (Type type in ddlTypes)
-                            {
-                                string k = type.Name + css.Name;
-                                if (!ddl_status.Contains(k))
-                                    ddl_status.Add(k);
-                            }
+                            if (!ddl_status.Contains(key))
+                                ddl_status.Add(key);
                         }
                     }
                 }

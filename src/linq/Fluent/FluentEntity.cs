@@ -1,4 +1,5 @@
 using System;
+
 namespace Kiss.Linq.Fluent
 {
     /// <summary>
@@ -10,7 +11,7 @@ namespace Kiss.Linq.Fluent
         /// Creates a new instance of <see cref="FluentEntity"/>
         /// </summary>
         /// <param name="bucket"></param>
-        public FluentEntity ( IBucket bucket )
+        public FluentEntity(IBucket bucket)
         {
             this.bucket = bucket;
         }
@@ -55,7 +56,9 @@ namespace Kiss.Linq.Fluent
         {
             get
             {
-                return bucket.UniqueItems[ 0 ];
+                if (bucket.UniqueItems.Length == 0)
+                    return string.Empty;
+                return bucket.UniqueItems[0];
             }
         }
 
@@ -68,7 +71,7 @@ namespace Kiss.Linq.Fluent
             /// Creates a new instance of <see cref="FluentOrderBy"/>
             /// </summary>
             /// <param name="bucket"></param>
-            public FluentOrderBy ( IBucket bucket )
+            public FluentOrderBy(IBucket bucket)
             {
                 this.bucket = bucket;
             }
@@ -78,7 +81,7 @@ namespace Kiss.Linq.Fluent
             /// </summary>
             /// <param name="field">field name</param>
             /// <param name="ascending">bool for sort order</param>
-            public delegate void Callback ( string field, bool ascending );
+            public delegate void Callback(string field, bool ascending);
 
             /// <summary>
             /// Checks if orderby is used in query and calls action delegate to 
@@ -87,12 +90,12 @@ namespace Kiss.Linq.Fluent
             /// </summary>
             /// <param name="action"></param>
             /// <returns></returns>
-            public FluentOrderBy IfUsed ( Action action )
+            public FluentOrderBy IfUsed(Action action)
             {
                 ifUsed = bucket.OrderByItems.Count > 0;
 
-                if ( ifUsed && action != null )
-                    action.DynamicInvoke ( );
+                if (ifUsed && action != null)
+                    action.DynamicInvoke();
                 return this;
             }
 
@@ -103,7 +106,7 @@ namespace Kiss.Linq.Fluent
             {
                 get
                 {
-                    return new FluentOrderByItem ( bucket, ifUsed );
+                    return new FluentOrderByItem(bucket, ifUsed);
                 }
             }
 
@@ -117,7 +120,7 @@ namespace Kiss.Linq.Fluent
                 /// </summary>
                 /// <param name="bucket"></param>
                 /// <param name="ifUsed">Defines if a order by is used.</param>
-                public FluentOrderByItem ( IBucket bucket, bool ifUsed )
+                public FluentOrderByItem(IBucket bucket, bool ifUsed)
                 {
                     this.bucket = bucket;
                     this.ifUsed = ifUsed;
@@ -127,11 +130,11 @@ namespace Kiss.Linq.Fluent
                 /// Does a callback to process the order by used in where clause.
                 /// </summary>
                 /// <param name="callback"></param>
-                public void Process ( Callback callback )
+                public void Process(Callback callback)
                 {
-                    foreach ( Bucket.OrderByInfo info in bucket.OrderByItems )
+                    foreach (Bucket.OrderByInfo info in bucket.OrderByItems)
                     {
-                        callback.Invoke ( info.FieldName, info.IsAscending );
+                        callback.Invoke(info.FieldName, info.IsAscending);
                     }
                 }
 
@@ -147,7 +150,7 @@ namespace Kiss.Linq.Fluent
         {
             get
             {
-                return new FluentOrderBy ( bucket );
+                return new FluentOrderBy(bucket);
             }
         }
 

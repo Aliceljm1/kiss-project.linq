@@ -1,5 +1,4 @@
 ﻿using Kiss.Plugin;
-using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.DataBase
 {
@@ -13,10 +12,7 @@ namespace Kiss.Linq.Sql.DataBase
             sl.AddComponent("System.Data.SqlClient", typeof(SqlDataProvider));
             sl.AddComponent("System.Data.SQLite", typeof(SqliteDataProvider));
 
-            bool ddl = setting["ddl"].ToBoolean(true);
-
-            if (ddl)
-                sl.AddComponent("kiss.ddl", typeof(DDLPlugin));
+            sl.AddComponent("kiss.ddl", typeof(DDLPlugin));
         }
     }
 }

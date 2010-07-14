@@ -14,7 +14,6 @@ namespace Kiss.Linq.Sql
 {
     public class Repository<T, t> : Repository<T>, IRepository<T, t>, IRepository<T>
         where T : Obj<t>, new()
-        where t : IEquatable<t>
     {
         #region ctor
 
@@ -48,7 +47,7 @@ namespace Kiss.Linq.Sql
         ///// </summary>
         //public bool CacheIdGranularity { get; set; }
 
-        public virtual T Get(t id)
+        public T Get(t id)
         {
             if (object.Equals(id, default(t)))
                 return default(T);
@@ -58,7 +57,7 @@ namespace Kiss.Linq.Sql
                     select obj).FirstOrDefault();
         }
 
-        public virtual List<T> Gets(t[] ids)
+        public List<T> Gets(t[] ids)
         {
             if (ids.Length == 0)
                 return new List<T>();
@@ -77,7 +76,7 @@ namespace Kiss.Linq.Sql
             return list;
         }
 
-        public virtual void DeleteById(params t[] ids)
+        public void DeleteById(params t[] ids)
         {
             if (ids.Length == 0)
                 return;
@@ -93,15 +92,19 @@ namespace Kiss.Linq.Sql
             Query.SubmitChanges(true);
         }
 
-        public virtual List<T> Gets(string commaDelimitedIds)
+        public List<T> Gets(string commaDelimitedIds)
         {
-            return Gets(StringUtil.ToArray<string, t>(StringUtil.CommaDelimitedListToStringArray(commaDelimitedIds), delegate(string str)
+            List<t> ids = new List<t>();
+
+            foreach (var str in StringUtil.CommaDelimitedListToStringArray(commaDelimitedIds))
             {
-                return TypeConvertUtil.ConvertTo<t>(str);
-            }));
+                ids.Add(TypeConvertUtil.ConvertTo<t>(str));
+            }
+
+            return Gets(ids.ToArray());
         }
 
-        public virtual T Save(NameValueCollection param, ConvertObj<T> converter)
+        public T Save(NameValueCollection param, ConvertObj<T> converter)
         {
             t id = default(t);
             if (StringUtil.HasText(param["id"]))
@@ -109,7 +112,7 @@ namespace Kiss.Linq.Sql
 
             T obj;
 
-            if (default(t).Equals(id))
+            if (object.Equals(id, default(t)))
             {
                 obj = new T();
                 Query.Add(obj);
@@ -119,8 +122,12 @@ namespace Kiss.Linq.Sql
                 Query.EnableQueryEvent = false;
                 obj = Get(id);
 
-                if (obj == null)
-                    throw new ArgumentException(string.Format("{0} object not exist. Id:{1}", typeof(T).Name, id));
+                if (obj == null)// create a new record
+                {
+                    obj = new T();
+                    obj.Id = id;
+                    Query.Add(obj, true);
+                }
             }
 
             if (!converter(obj, param))
@@ -131,13 +138,13 @@ namespace Kiss.Linq.Sql
             return obj;
         }
 
-        public virtual T Save(string param, ConvertObj<T> converter)
+        public T Save(string param, ConvertObj<T> converter)
         {
             return Save(StringUtil.DelimitedEquation2NVCollection("&", param), converter);
         }
     }
 
-    public class Repository<T> : Repository, IRepository<T>, IAutoStart where T : class, IQueryObject, new()
+    public class Repository<T> : Repository, IRepository<T>, IAutoStart where T : IQueryObject, new()
     {
         #region ctor
 
@@ -166,7 +173,7 @@ namespace Kiss.Linq.Sql
 
         private SqlQuery<T> _query;
 
-        public ILinqQuery<T> Query
+        public IKissQueryable<T> Query
         {
             get
             {
@@ -190,11 +197,12 @@ namespace Kiss.Linq.Sql
         /// </summary>
         /// <param name="qc"></param>
         /// <returns></returns>
-        public virtual List<T> Gets(QueryCondition q)
+        public List<T> Gets(QueryCondition q)
         {
             CheckQuery(q);
 
-            q.TableField = "*";
+            if ((Query as SqlQuery<T>).DataContext == null)
+                throw new LinqException("DataContext is null!");
 
             BucketImpl bucket = new BucketImpl<T>().Describe();
 
@@ -202,35 +210,38 @@ namespace Kiss.Linq.Sql
 
             q.FireBeforeQueryEvent("Gets");
 
+            if (string.IsNullOrEmpty(q.TableField))
+                q.TableField = "*";
+
             using (IDataReader rdr = q.GetReader())
             {
                 while (rdr.Read())
                 {
                     var item = new T();
+                    var t = typeof(T);
 
-                    FluentBucket.As(bucket).For.EachItem.Process(delegate(BucketItem bucketItem)
+                    if (q.TableField == "*")
                     {
-                        PropertyInfo info = item.GetType().GetProperty(bucketItem.ProperyName);
-
-                        if (info != null && info.CanWrite)
+                        FluentBucket.As(bucket).For.EachItem.Process(delegate(BucketItem bucketItem)
                         {
-                            object o = null;
-                            int index = rdr.GetOrdinal(bucketItem.Name);
-                            if (index != -1)
+                            NewMethod(rdr, item, t, bucketItem);
+                        });
+                    }
+                    else
+                    {
+                        foreach (string field in StringUtil.Split(q.TableField, ",", true, true))
+                        {
+                            BucketItem bitem = null;
+                            foreach (BucketItem bucketItem in bucket.Items.Values)
                             {
-                                o = rdr[index];
-                                if (!(o is DBNull))
-                                {
-                                    o = TypeConvertUtil.ConvertTo(o, bucketItem.PropertyType);
-
-                                    if (o != null)
-                                        info.SetValue(item
-                                            , o
-                                            , null);
-                                }
+                                if (string.Equals(bucketItem.Name, field, StringComparison.InvariantCultureIgnoreCase))
+                                    bitem = bucketItem;
                             }
+
+                            if (bitem != null)
+                                NewMethod(rdr, item, t, bitem);
                         }
-                    });
+                    }
 
                     list.Add(item);
                 }
@@ -239,28 +250,56 @@ namespace Kiss.Linq.Sql
             return list;
         }
 
+        private static void NewMethod(IDataReader rdr, T item, Type t, BucketItem bucketItem)
+        {
+            PropertyInfo info = t.GetProperty(bucketItem.ProperyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.SetProperty);
+
+            if (info != null)
+            {
+                object o = null;
+
+                int index = rdr.GetOrdinal(bucketItem.Name);
+                if (index != -1)
+                {
+                    o = rdr[index];
+                    if (!(o is DBNull))
+                    {
+                        o = TypeConvertUtil.ConvertTo(o, info.PropertyType);
+
+                        if (o != null)
+                            info.SetValue(item
+                                , o
+                                , null);
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// 获取记录数
         /// </summary>
         /// <param name="qc"></param>
         /// <returns></returns>
-        public virtual int Count(QueryCondition q)
+        public int Count(QueryCondition q)
         {
             CheckQuery(q);
+
+            if ((Query as SqlQuery<T>).DataContext == null)
+                throw new LinqException("DataContext is null!");
 
             q.FireBeforeQueryEvent("Count");
 
             return q.GetRelationCount();
         }
 
-        public virtual T Save(T obj)
+        public T Save(T obj)
         {
             Query.SubmitChanges(false);
 
             return obj;
         }
 
-        public virtual List<T> GetsAll()
+        public List<T> GetsAll()
         {
             return (from q in Query
                     select q).ToList();
@@ -276,10 +315,10 @@ namespace Kiss.Linq.Sql
             if (q.ConnectionStringSettings == null)
                 q.ConnectionStringSettings = ConnectionStringSettings;
 
-            string tablename = Obj.GetTableName<T>();
+            string tablename = Kiss.QueryObject<T>.GetTableName();
 
             if (string.IsNullOrEmpty(q.ParentCacheKey))
-                q.ParentCacheKey = tablename;
+                q.ParentCacheKey = JCache.GetRootCacheKey(tablename);
 
             if (string.IsNullOrEmpty(q.TableName))
                 q.TableName = tablename;
@@ -289,12 +328,13 @@ namespace Kiss.Linq.Sql
 
         public void Start()
         {
-            CreatedEventArgs e = new CreatedEventArgs();
+            CreatedEventArgs e = new CreatedEventArgs(typeof(T));
             e.ConnectionStringSettings = ConnectionStringSettings;
 
             OnCreated(e);
 
-            ConnectionStringSettings = e.ConnectionStringSettings;
+            if (e.ConnectionStringSettings != null)
+                ConnectionStringSettings = e.ConnectionStringSettings;
         }
 
         #endregion
@@ -306,7 +346,7 @@ namespace Kiss.Linq.Sql
 
         public static event EventHandler<CreatedEventArgs> Created;
 
-        protected virtual void OnCreated(CreatedEventArgs e)
+        protected void OnCreated(CreatedEventArgs e)
         {
             EventHandler<CreatedEventArgs> handler = Created;
 
@@ -318,9 +358,14 @@ namespace Kiss.Linq.Sql
 
         public class CreatedEventArgs : EventArgs
         {
-            public static readonly new CreatedEventArgs Empty = new CreatedEventArgs();
-
             public ConnectionStringSettings ConnectionStringSettings { get; set; }
+
+            public Type ModelType { get; private set; }
+
+            public CreatedEventArgs(Type modelType)
+            {
+                ModelType = modelType;
+            }
         }
     }
 }

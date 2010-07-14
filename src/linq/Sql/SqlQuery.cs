@@ -14,8 +14,8 @@ namespace Kiss.Linq.Sql
     /// sql query
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class SqlQuery<T> : Query<T>, ILinqQuery<T>
-        where T : class, IQueryObject
+    public class SqlQuery<T> : Query<T>, IKissQueryable<T>
+        where T : IQueryObject, new()
     {
         #region fields
 
@@ -111,7 +111,7 @@ namespace Kiss.Linq.Sql
                 DataContext.OnPreQuery(e);
 
                 if (e.Result != null)
-                    return e.Result as T;
+                    return (T)e.Result;
             }
 
             T result = ExecuteSingle(sql,
@@ -242,8 +242,8 @@ namespace Kiss.Linq.Sql
                         if (o == null)
                             continue;
 
-                        PropertyInfo pi = t.GetProperty(key);
-                        if (pi.CanWrite)
+                        PropertyInfo pi = t.GetProperty(key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.SetProperty);
+                        if (pi != null)
                             pi.SetValue(obj,
                                 o,
                                 null);
@@ -280,14 +280,16 @@ namespace Kiss.Linq.Sql
             {
                 while (rdr.Read())
                 {
-                    var item = Activator.CreateInstance<T>();
+                    var item = new T();
+
+                    var type = typeof(T);
 
                     foreach (string key in bItems.Keys)
                     {
                         BucketItem bucketItem = bItems[key];
-                        PropertyInfo info = item.GetType().GetProperty(key);
+                        PropertyInfo info = type.GetProperty(key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.SetProperty);
 
-                        if (info != null && info.CanWrite)
+                        if (info != null)
                         {
                             object o = FetchDataReader(bucket, rdr, bucketItem.Name, bucketItem.PropertyType);
                             if (o == null)
@@ -330,7 +332,7 @@ namespace Kiss.Linq.Sql
             {
                 ExecuteOnly(sql.ToString());
 
-                Obj.OnBatch(typeof(T));
+                Kiss.QueryObject.OnBatch(typeof(T));
             }
         }
 

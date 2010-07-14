@@ -6,14 +6,14 @@ using System.Linq.Expressions;
 
 namespace Kiss.Linq
 {
-    internal class ProjectedQuery<T, S> : ReadOnlyQueryCollection<S>, IQueryProvider, IQueryable<S> where T : IQueryObject
+    internal class ProjectedQuery<T, S> : ReadOnlyQueryCollection<S>, IQueryProvider, IQueryable<S> where T : IQueryObject, new()
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ProjectedQuery{T,S}"/> class.
         /// </summary>
         /// <param name="expression">The expression.</param>
         /// <param name="query">The query.</param>
-        public ProjectedQuery ( Expression expression, Query<T> query )
+        public ProjectedQuery(Expression expression, Query<T> query)
         {
             this.expression = expression;
             this.query = query;
@@ -27,33 +27,33 @@ namespace Kiss.Linq
         /// <returns>
         /// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
         /// </returns>
-        public IEnumerator<S> GetEnumerator ( )
+        public IEnumerator<S> GetEnumerator()
         {
-            this.ProcessGenericList ( );
-            return Items.GetEnumerator ( );
+            this.ProcessGenericList();
+            return Items.GetEnumerator();
         }
 
 
-        private void ProcessGenericList ( )
+        private void ProcessGenericList()
         {
-            Items.Clear ( );
+            Items.Clear();
 
-            UnaryExpression uExp = QueryExtension.GetUnaryExpressionFromMethodCall ( this.expression );
+            UnaryExpression uExp = QueryExtension.GetUnaryExpressionFromMethodCall(this.expression);
 
-            if ( uExp.Operand is LambdaExpression )
+            if (uExp.Operand is LambdaExpression)
             {
-                var result = query.Select<T, S> ( ( ( Expression<Func<T, S>> ) uExp.Operand ).Compile ( ) );
+                var result = query.Select<T, S>(((Expression<Func<T, S>>)uExp.Operand).Compile());
 
-                Items.AddRange ( result );
+                Items.AddRange(result);
             }
         }
         #endregion
 
         #region IEnumerable Members
 
-        IEnumerator IEnumerable.GetEnumerator ( )
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            return ( this as IEnumerable<S> ).GetEnumerator ( );
+            return (this as IEnumerable<S>).GetEnumerator();
         }
 
 
@@ -69,7 +69,7 @@ namespace Kiss.Linq
         /// <returns>A <see cref="T:System.Type"/> that represents the type of the element(s) that are returned when the expression tree associated with this object is executed.</returns>
         public Type ElementType
         {
-            get { return typeof ( S ); }
+            get { return typeof(S); }
         }
 
         /// <summary>
@@ -96,46 +96,46 @@ namespace Kiss.Linq
 
         #region IQueryProvider Members
 
-        public IQueryable<TElement> CreateQuery<TElement> ( Expression expression )
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
         {
-            return query.CreateQuery<TElement> ( expression );
+            return query.CreateQuery<TElement>(expression);
         }
 
-        public IQueryable CreateQuery ( Expression expression )
+        public IQueryable CreateQuery(Expression expression)
         {
-            return query.CreateQuery<S> ( expression );
+            return query.CreateQuery<S>(expression);
         }
 
-        public TResult Execute<TResult> ( Expression expression )
+        public TResult Execute<TResult>(Expression expression)
         {
-            return ( TResult ) this.ExecuteNonGeneric<TResult> ( expression );
+            return (TResult)this.ExecuteNonGeneric<TResult>(expression);
         }
 
-        public object Execute ( Expression expression )
+        public object Execute(Expression expression)
         {
-            return ( S ) this.ExecuteNonGeneric<S> ( expression );
+            return (S)this.ExecuteNonGeneric<S>(expression);
         }
 
-        public object ExecuteNonGeneric<TResult> ( Expression expression )
+        public object ExecuteNonGeneric<TResult>(Expression expression)
         {
-            ProcessGenericList ( );
+            ProcessGenericList();
 
-            if ( expression is MethodCallExpression )
+            if (expression is MethodCallExpression)
             {
-                MethodCallExpression mCallExp = ( MethodCallExpression ) expression;
+                MethodCallExpression mCallExp = (MethodCallExpression)expression;
                 // when first , last or single is called 
                 string methodName = mCallExp.Method.Name;
 
                 /* Try for Generics Results */
-                Type itemType = typeof ( IQuery<TResult> );
+                Type itemType = typeof(IQuery<TResult>);
 
-                object obj = QueryExtension.InvokeMethod ( methodName, itemType, this );
+                object obj = QueryExtension.InvokeMethod(methodName, itemType, this);
 
                 /* Try for Non Generics Result */
-                if ( obj == null )
+                if (obj == null)
                 {
-                    itemType = typeof ( IQuery );
-                    obj = QueryExtension.InvokeMethod ( methodName, itemType, this );
+                    itemType = typeof(IQuery);
+                    obj = QueryExtension.InvokeMethod(methodName, itemType, this);
                 }
                 return obj;
 
