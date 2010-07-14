@@ -101,8 +101,7 @@
     </Compile>
     <Compile Include="Sql\DataBase\Database.cs" />
     <Compile Include="Sql\DataBase\DatabaseContext.cs" />
-    <Compile Include="Sql\DataBase\DataBaseInitializer.cs" />
-    <Compile Include="Sql\DataBase\DDLPlugin.cs" />
+    <Compile Include="Sql\DataBase\DDLFactory.cs" />
     <Compile Include="Sql\DataBase\IDataProvider.cs" />
     <Compile Include="Sql\DataBase\IDDL.cs" />
     <Compile Include="Sql\DataBase\ScriptProcessor.cs" />

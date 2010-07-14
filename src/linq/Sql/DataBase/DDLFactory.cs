@@ -2,18 +2,16 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Text;
-using Kiss.Plugin;
 
 namespace Kiss.Linq.Sql.DataBase
 {
-    [Plugin]
-    public class DDLPlugin
+    public class DDLFactory
     {
         // ddl status
         private static readonly List<string> ddl_status = new List<string>();
         private static readonly object _lock = new object();
 
-        public void Sync(IDDL ddl, Type objtype, ConnectionStringSettings css)
+        public static void Sync(IDDL ddl, Type objtype, ConnectionStringSettings css)
         {
             if (ddl == null)
                 return;
@@ -40,11 +38,11 @@ namespace Kiss.Linq.Sql.DataBase
                             // execute sql
                             db.Execute(sql.ToString());
 
-                            LogManager.GetLogger<DDLPlugin>().Info("sync table schema of {0} ok.", objtype.Name);
+                            LogManager.GetLogger<DDLFactory>().Info("sync table schema of {0} ok.", objtype.Name);
                         }
                         catch (Exception ex)
                         {
-                            LogManager.GetLogger<DDLPlugin>().Fatal(ex.Message);
+                            LogManager.GetLogger<DDLFactory>().Fatal(ex.Message);
                         }
                         finally
                         {

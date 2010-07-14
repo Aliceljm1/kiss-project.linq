@@ -2,4 +2,4 @@
 
 [assembly: AssemblyTitle("Kiss.Linq")]
 
-[assembly: AssemblyVersion("2.6.3.0")]
+[assembly: AssemblyVersion("2.6.4.0")]

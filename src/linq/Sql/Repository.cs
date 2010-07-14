@@ -5,8 +5,10 @@ using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Xml;
 using Kiss.Config;
 using Kiss.Linq.Fluent;
+using Kiss.Plugin;
 using Kiss.Query;
 using Kiss.Utils;
 
@@ -348,11 +350,61 @@ namespace Kiss.Linq.Sql
 
         protected void OnCreated(CreatedEventArgs e)
         {
+            LoadConn(e);
+
             EventHandler<CreatedEventArgs> handler = Created;
 
             if (handler != null)
             {
                 handler(this, e);
+            }
+        }
+
+        private void LoadConn(CreatedEventArgs e)
+        {
+            PluginSetting setting = PluginSettings.Get<RepositoryInitializer>();
+
+            if (setting != null)
+            {
+                string typename = e.ModelType.Name;
+
+                XmlNode connsnode = setting.Node.SelectSingleNode("conns");
+                if (connsnode == null) return;
+
+                ConnectionStringSettings = Config.ConfigBase.GetConnectionStringSettings(XmlUtil.GetStringAttribute(connsnode, "default", string.Empty));
+
+                foreach (XmlNode conn in connsnode.ChildNodes)
+                {
+                    string types = XmlUtil.GetStringAttribute(conn, "type", string.Empty);
+                    if (StringUtil.IsNullOrEmpty(types))
+                        continue;
+
+                    bool match = false;
+
+                    foreach (string type in StringUtil.Split(types, ",", true, true))
+                    {
+                        if (type.StartsWith("*") && typename.EndsWith(type.Substring(1), StringComparison.InvariantCultureIgnoreCase))
+                            match = true;
+
+                        if (!match && type.EndsWith("*") && typename.StartsWith(type.Substring(0, type.Length - 1), StringComparison.InvariantCultureIgnoreCase))
+                            match = true;
+
+                        if (!match && type.StartsWith("*") && type.EndsWith("*") && typename.ToLower().Contains(type.Substring(1, type.Length - 1).ToLower()))
+                            match = true;
+
+                        if (!match && string.Equals(type, typename, StringComparison.InvariantCultureIgnoreCase))
+                            match = true;
+
+                        if (match)
+                            break;
+                    }
+
+                    if (match)
+                    {
+                        ConnectionStringSettings = Config.ConfigBase.GetConnectionStringSettings(XmlUtil.GetStringAttribute(conn, "conn", string.Empty));
+                        break;
+                    }
+                }
             }
         }
 

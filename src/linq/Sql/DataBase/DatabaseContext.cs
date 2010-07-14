@@ -73,12 +73,12 @@ namespace Kiss.Linq.Sql.DataBase
 
                 connstring = connectionStringSettings.ConnectionString;
 
-                PluginSetting ddlconfig = PluginSettings.Get<DataBaseInitializer>();
+                PluginSetting ddlconfig = PluginSettings.Get<RepositoryInitializer>();
                 if (ddlconfig == null)
                     return;
 
                 if (is_ddlallowed(StringUtil.Split(ddlconfig["ddl_types"], StringUtil.Comma, true, true), modelType.Name))
-                    ServiceLocator.Instance.Resolve<DDLPlugin>().Sync(dbAccess as IDDL, modelType, connectionStringSettings);
+                    DDLFactory.Sync(dbAccess as IDDL, modelType, connectionStringSettings);
             }
             catch (Exception ex)
             {
