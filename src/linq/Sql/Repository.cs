@@ -215,6 +215,9 @@ namespace Kiss.Linq.Sql
             if (string.IsNullOrEmpty(q.TableField))
                 q.TableField = "*";
 
+            if (q.PageSize == -1)
+                q.PageSize = 20;
+
             using (IDataReader rdr = q.GetReader())
             {
                 while (rdr.Read())

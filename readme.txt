@@ -33,5 +33,6 @@ v2.6.4
 移除了DDL的plugin标签，改为static方法
 增加数据库连接字符串的配置功能
 移除DataBaseInitializer到Core工程的RepositoryInitializer
+Repository将pagesize=-1的querycondition设置为pagesize=20
 todo：
 Repository脱离<add name="PerRequestLifestyle" type="Castle.MicroKernel.Lifestyle.PerWebRequestLifestyleModule, Castle.MicroKernel" /> httpmodule的依赖
