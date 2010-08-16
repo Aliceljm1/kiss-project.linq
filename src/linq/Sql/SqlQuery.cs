@@ -242,8 +242,8 @@ namespace Kiss.Linq.Sql
                         if (o == null)
                             continue;
 
-                        PropertyInfo pi = t.GetProperty(key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.SetProperty);
-                        if (pi != null)
+                        PropertyInfo pi = t.GetProperty(key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly );
+                        if (pi != null && pi.CanWrite)
                             pi.SetValue(obj,
                                 o,
                                 null);
@@ -287,9 +287,9 @@ namespace Kiss.Linq.Sql
                     foreach (string key in bItems.Keys)
                     {
                         BucketItem bucketItem = bItems[key];
-                        PropertyInfo info = type.GetProperty(key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.SetProperty);
+                        PropertyInfo info = type.GetProperty(key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
-                        if (info != null)
+                        if (info != null && info.CanWrite)
                         {
                             object o = FetchDataReader(bucket, rdr, bucketItem.Name, bucketItem.PropertyType);
                             if (o == null)

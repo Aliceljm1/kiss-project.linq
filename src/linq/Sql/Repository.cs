@@ -257,9 +257,9 @@ namespace Kiss.Linq.Sql
 
         private static void NewMethod(IDataReader rdr, T item, Type t, BucketItem bucketItem)
         {
-            PropertyInfo info = t.GetProperty(bucketItem.ProperyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.SetProperty);
+            PropertyInfo info = t.GetProperty(bucketItem.ProperyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
-            if (info != null)
+            if (info != null && info.CanWrite)
             {
                 object o = null;
 
