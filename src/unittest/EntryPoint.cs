@@ -119,7 +119,7 @@ namespace Kiss.Linq.Linq2Sql.Test
             var query = from book in bookContext
                         where book.Author.Contains("Don Box")
                         select book;
-            
+
             Assert.AreEqual(1, query.Count());
 
             Book.ConnectionStringSettings = ConfigurationManager.ConnectionStrings["sqlite"]; ;
@@ -445,6 +445,13 @@ namespace Kiss.Linq.Linq2Sql.Test
                     select book;
 
             Assert.AreEqual(query.Count(), 2);
+
+            // sql语言优化，只有一条记录是用=
+            query = from book in bookContext
+                    where new List<string> { "Paolo Pialorsi" }.Contains(book.Author)
+                    select book;
+
+            Assert.AreEqual(query.Count(), 1);
 
             //query = from book in bookContext
             //        where new List<string>().Contains(book.Author)

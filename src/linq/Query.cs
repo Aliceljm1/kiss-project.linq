@@ -850,9 +850,16 @@ namespace Kiss.Linq
                                         Child = bucketImpl.Items[memberName].Child
                                     };
 
-                                    foreach (object item in value)
+                                    if (value.Count == 1)
                                     {
-                                        leafItem.Values.Add(new BucketItem.QueryCondition(item, RelationType.Contains));
+                                        leafItem.Values.Add(new BucketItem.QueryCondition(value[0], RelationType.Equal));
+                                    }
+                                    else
+                                    {
+                                        foreach (object item in value)
+                                        {
+                                            leafItem.Values.Add(new BucketItem.QueryCondition(item, RelationType.Contains));
+                                        }
                                     }
 
                                     bucketImpl.CurrentTreeNode.Nodes.Add(new TreeNode.Node { Value = leafItem });
