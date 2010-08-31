@@ -77,7 +77,7 @@ namespace Kiss.Linq.Sql.DataBase
                 if (ddlconfig == null)
                     return;
 
-                if (is_ddlallowed(StringUtil.Split(ddlconfig["ddl_types"], StringUtil.Comma, true, true), modelType.Name))
+                if (is_ddlallowed(StringUtil.Split(ddlconfig["ddl_types"], StringUtil.Comma, true, true), Kiss.QueryObject.GetTableName(modelType)))
                     DDLFactory.Sync(dbAccess as IDDL, modelType, connectionStringSettings);
             }
             catch (Exception ex)

@@ -36,5 +36,7 @@ v2.6.4
 Repository将pagesize=-1的querycondition设置为pagesize=20
 contains优化，只有一条记录是用=
 
+v2.6.5
+修改DDL配置参数，基于数据库表名称，而不是模型名称
 todo：
 Repository脱离<add name="PerRequestLifestyle" type="Castle.MicroKernel.Lifestyle.PerWebRequestLifestyleModule, Castle.MicroKernel" /> httpmodule的依赖
