@@ -369,16 +369,16 @@ namespace Kiss.Linq.Sql
 
             if (setting != null)
             {
-                string typename = e.ModelType.Name;
-
                 XmlNode connsnode = setting.Node.SelectSingleNode("conns");
                 if (connsnode == null) return;
 
                 ConnectionStringSettings = Config.ConfigBase.GetConnectionStringSettings(XmlUtil.GetStringAttribute(connsnode, "default", string.Empty));
 
+                string tablename = Kiss.QueryObject.GetTableName(e.ModelType);
+
                 foreach (XmlNode conn in connsnode.ChildNodes)
                 {
-                    string types = XmlUtil.GetStringAttribute(conn, "type", string.Empty);
+                    string types = XmlUtil.GetStringAttribute(conn, "table", string.Empty);
                     if (StringUtil.IsNullOrEmpty(types))
                         continue;
 
@@ -386,16 +386,16 @@ namespace Kiss.Linq.Sql
 
                     foreach (string type in StringUtil.Split(types, ",", true, true))
                     {
-                        if (type.StartsWith("*") && typename.EndsWith(type.Substring(1), StringComparison.InvariantCultureIgnoreCase))
+                        if (type.StartsWith("*") && tablename.EndsWith(type.Substring(1), StringComparison.InvariantCultureIgnoreCase))
                             match = true;
 
-                        if (!match && type.EndsWith("*") && typename.StartsWith(type.Substring(0, type.Length - 1), StringComparison.InvariantCultureIgnoreCase))
+                        if (!match && type.EndsWith("*") && tablename.StartsWith(type.Substring(0, type.Length - 1), StringComparison.InvariantCultureIgnoreCase))
                             match = true;
 
-                        if (!match && type.StartsWith("*") && type.EndsWith("*") && typename.ToLower().Contains(type.Substring(1, type.Length - 1).ToLower()))
+                        if (!match && type.StartsWith("*") && type.EndsWith("*") && tablename.ToLower().Contains(type.Substring(1, type.Length - 1).ToLower()))
                             match = true;
 
-                        if (!match && string.Equals(type, typename, StringComparison.InvariantCultureIgnoreCase))
+                        if (!match && string.Equals(type, tablename, StringComparison.InvariantCultureIgnoreCase))
                             match = true;
 
                         if (match)

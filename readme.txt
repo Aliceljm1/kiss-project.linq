@@ -37,6 +37,16 @@ Repository将pagesize=-1的querycondition设置为pagesize=20
 contains优化，只有一条记录是用=
 
 v2.6.5
-修改DDL配置参数，基于数据库表名称，而不是模型名称
+修改DDL配置参数和数据库连接字符串，基于数据库表名称，而不是模型名称
+修改RepositoryInitializer的配置，新配置如下：
+	<plugin name="RepositoryInitializer" type1="Kiss.Linq.Sql.Repository`1,Kiss.Linq" type2="Kiss.Linq.Sql.Repository`2,Kiss.Linq" auto_tables="">
+		<providers>
+		<add name="System.Data.SqlClient" type="Kiss.Linq.Sql.DataBase.SqlDataProvider,Kiss.Linq" />
+		<add name="System.Data.SQLite" type="Kiss.Linq.Sql.DataBase.SqliteDataProvider,Kiss.Linq" />
+		</providers>
+		<conns default="cms">
+		<add conn="kiss" table="g*"/>
+		</conns>
+	</plugin>
 todo：
 Repository脱离<add name="PerRequestLifestyle" type="Castle.MicroKernel.Lifestyle.PerWebRequestLifestyleModule, Castle.MicroKernel" /> httpmodule的依赖
