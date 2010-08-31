@@ -180,7 +180,7 @@ namespace Kiss.Linq.Sql
             get
             {
                 if (_query == null)
-                    _query = CreateQuery();
+                    _query = CreateQuery() as SqlQuery<T>;
                 return _query;
             }
         }
@@ -189,7 +189,7 @@ namespace Kiss.Linq.Sql
         /// create new linq query
         /// </summary>
         /// <returns></returns>
-        public SqlQuery<T> CreateQuery()
+        public IKissQueryable<T> CreateQuery()
         {
             return new SqlQuery<T>(ConnectionStringSettings);
         }
