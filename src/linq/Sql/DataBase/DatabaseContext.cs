@@ -21,44 +21,7 @@ namespace Kiss.Linq.Sql.DataBase
 
         IDataProvider dbAccess = null;
 
-        string connstring;
-
-        #region events
-
-        public static event EventHandler<QueryEventArgs> PreQuery;
-
-        internal virtual void OnPreQuery(QueryEventArgs e)
-        {
-            EventHandler<QueryEventArgs> handler = PreQuery;
-
-            if (handler != null)
-            {
-                handler(this, e);
-            }
-        }
-
-        public class QueryEventArgs : EventArgs
-        {
-            public static readonly new QueryEventArgs Empty = new QueryEventArgs();
-
-            public Type Type { get; set; }
-            public string Sql { get; set; }
-            public object Result { get; set; }
-        }
-
-        public static event EventHandler<QueryEventArgs> AfterQuery;
-
-        internal virtual void OnAfterQuery(QueryEventArgs e)
-        {
-            EventHandler<QueryEventArgs> handler = AfterQuery;
-
-            if (handler != null)
-            {
-                handler(this, e);
-            }
-        }
-
-        #endregion
+        string connstring;        
 
         void Init(ConnectionStringSettings connectionStringSettings, Type modelType)
         {

@@ -103,12 +103,12 @@ namespace Kiss.Linq.Sql
 
             if (EnableQueryEvent)
             {
-                DatabaseContext.QueryEventArgs e = new DatabaseContext.QueryEventArgs()
+                Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
                 {
                     Type = typeof(T),
                     Sql = sql
                 };
-                DataContext.OnPreQuery(e);
+                Kiss.QueryObject.OnPreQuery(e);
 
                 if (e.Result != null)
                     return (T)e.Result;
@@ -119,7 +119,7 @@ namespace Kiss.Linq.Sql
 
             if (EnableQueryEvent)
             {
-                DataContext.OnAfterQuery(new DatabaseContext.QueryEventArgs()
+                Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
                 {
                     Type = typeof(T),
                     Sql = sql,
@@ -136,12 +136,12 @@ namespace Kiss.Linq.Sql
 
             if (EnableQueryEvent)
             {
-                DatabaseContext.QueryEventArgs e = new DatabaseContext.QueryEventArgs()
+                Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
                 {
                     Type = typeof(T),
                     Sql = sql
                 };
-                DataContext.OnPreQuery(e);
+                Kiss.QueryObject.OnPreQuery(e);
 
                 if (e.Result != null)
                 {
@@ -157,7 +157,7 @@ namespace Kiss.Linq.Sql
 
             if (EnableQueryEvent)
             {
-                DataContext.OnAfterQuery(new DatabaseContext.QueryEventArgs()
+                Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
                 {
                     Type = typeof(T),
                     Sql = sql,

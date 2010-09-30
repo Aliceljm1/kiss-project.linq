@@ -206,10 +206,6 @@ namespace Kiss.Linq.Sql
             if ((Query as SqlQuery<T>).DataContext == null)
                 throw new LinqException("DataContext is null!");
 
-            BucketImpl bucket = new BucketImpl<T>().Describe();
-
-            List<T> list = new List<T>();
-
             q.FireBeforeQueryEvent("Gets");
 
             if (string.IsNullOrEmpty(q.TableField))
@@ -218,8 +214,24 @@ namespace Kiss.Linq.Sql
             if (q.PageSize == -1)
                 q.PageSize = 20;
 
+            string sql = q.WhereClause + q.PageSize.ToString() + q.OrderByClause + q.TableField;
+
+            Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
+            {
+                Type = typeof(T),
+                Sql = sql
+            };
+            Kiss.QueryObject.OnPreQuery(e);
+
+            if (e.Result != null)
+                return e.Result as List<T>;
+
+            List<T> list = new List<T>();
+
             using (IDataReader rdr = q.GetReader())
             {
+                BucketImpl bucket = new BucketImpl<T>().Describe();
+
                 while (rdr.Read())
                 {
                     var item = new T();
@@ -229,7 +241,7 @@ namespace Kiss.Linq.Sql
                     {
                         FluentBucket.As(bucket).For.EachItem.Process(delegate(BucketItem bucketItem)
                         {
-                            NewMethod(rdr, item, t, bucketItem);
+                            fillObject(rdr, item, t, bucketItem);
                         });
                     }
                     else
@@ -244,7 +256,7 @@ namespace Kiss.Linq.Sql
                             }
 
                             if (bitem != null)
-                                NewMethod(rdr, item, t, bitem);
+                                fillObject(rdr, item, t, bitem);
                         }
                     }
 
@@ -252,32 +264,14 @@ namespace Kiss.Linq.Sql
                 }
             }
 
-            return list;
-        }
-
-        private static void NewMethod(IDataReader rdr, T item, Type t, BucketItem bucketItem)
-        {
-            PropertyInfo info = t.GetProperty(bucketItem.ProperyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
-
-            if (info != null && info.CanWrite)
+            Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
             {
-                object o = null;
+                Type = typeof(T),
+                Sql = sql,
+                Result = list
+            });
 
-                int index = rdr.GetOrdinal(bucketItem.Name);
-                if (index != -1)
-                {
-                    o = rdr[index];
-                    if (!(o is DBNull))
-                    {
-                        o = TypeConvertUtil.ConvertTo(o, info.PropertyType);
-
-                        if (o != null)
-                            info.SetValue(item
-                                , o
-                                , null);
-                    }
-                }
-            }
+            return list;
         }
 
         /// <summary>
@@ -294,7 +288,39 @@ namespace Kiss.Linq.Sql
 
             q.FireBeforeQueryEvent("Count");
 
-            return q.GetRelationCount();
+            string sql = "count" + q.WhereClause;
+
+            Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
+            {
+                Type = typeof(T),
+                Sql = sql
+            };
+            Kiss.QueryObject.OnPreQuery(e);
+
+            if (e.Result != null)
+                return (int)e.Result;
+
+            int count = q.GetRelationCount();
+
+            Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
+            {
+                Type = typeof(T),
+                Sql = sql,
+                Result = count
+            });
+
+            return count;
+        }
+
+        public void Delete(QueryCondition q)
+        {
+            CheckQuery(q);
+
+            q.FireBeforeQueryEvent("Delete");
+
+            q.Delete();
+
+            Kiss.QueryObject.OnBatch(typeof(T));
         }
 
         public T Save(T obj)
@@ -322,11 +348,33 @@ namespace Kiss.Linq.Sql
 
             string tablename = Kiss.QueryObject<T>.GetTableName();
 
-            if (string.IsNullOrEmpty(q.ParentCacheKey))
-                q.ParentCacheKey = JCache.GetRootCacheKey(tablename);
-
             if (string.IsNullOrEmpty(q.TableName))
                 q.TableName = tablename;
+        }
+
+        private static void fillObject(IDataReader rdr, T item, Type t, BucketItem bucketItem)
+        {
+            PropertyInfo info = t.GetProperty(bucketItem.ProperyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
+            if (info != null && info.CanWrite)
+            {
+                object o = null;
+
+                int index = rdr.GetOrdinal(bucketItem.Name);
+                if (index != -1)
+                {
+                    o = rdr[index];
+                    if (!(o is DBNull))
+                    {
+                        o = TypeConvertUtil.ConvertTo(o, info.PropertyType);
+
+                        if (o != null)
+                            info.SetValue(item
+                                , o
+                                , null);
+                    }
+                }
+            }
         }
 
         #region IAutoStart Members
