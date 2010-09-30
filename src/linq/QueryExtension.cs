@@ -8,7 +8,7 @@ namespace Kiss.Linq
 {
     public static class QueryExtension
     {
-        private static readonly IDictionary<string, IDictionary<string, object>> uniqueDefaultValueObjectMap =
+        private static readonly Dictionary<string, IDictionary<string, object>> uniqueDefaultValueObjectMap =
             new Dictionary<string, IDictionary<string, object>>();
 
         internal static IDictionary<string, object> GetUniqueItemDefaultDetail(this IQueryObject obj)
@@ -17,31 +17,38 @@ namespace Kiss.Linq
 
             if (!uniqueDefaultValueObjectMap.ContainsKey(runningType.Name))
             {
-                IDictionary<string, object> uniqueDefaultValues = new Dictionary<string, object>();
-                //clone the result.
-                object runningObject = Activator.CreateInstance(runningType);
-
-                PropertyInfo[] infos = runningType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
-
-                int index = 0;
-
-                foreach (PropertyInfo info in infos)
+                lock (uniqueDefaultValueObjectMap)
                 {
-                    object[] arg = info.GetCustomAttributes(typeof(PKAttribute), true);
-
-                    if (arg != null && arg.Length > 0)
+                    if (!uniqueDefaultValueObjectMap.ContainsKey(runningType.Name))
                     {
-                        object value = info.GetValue(runningObject, null);
+                        IDictionary<string, object> uniqueDefaultValues = new Dictionary<string, object>();
+                        //clone the result.
+                        object runningObject = Activator.CreateInstance(runningType);
 
-                        if (!uniqueDefaultValues.ContainsKey(info.Name))
+                        PropertyInfo[] infos = runningType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
+                        int index = 0;
+
+                        foreach (PropertyInfo info in infos)
                         {
-                            uniqueDefaultValues.Add(info.Name, new { Index = index, Value = value });
+                            object[] arg = info.GetCustomAttributes(typeof(PKAttribute), true);
+
+                            if (arg != null && arg.Length > 0)
+                            {
+                                object value = info.GetValue(runningObject, null);
+
+                                if (!uniqueDefaultValues.ContainsKey(info.Name))
+                                {
+                                    uniqueDefaultValues.Add(info.Name, new { Index = index, Value = value });
+                                }
+                            }
+                            index++;
                         }
+                        uniqueDefaultValueObjectMap.Add(runningType.Name, uniqueDefaultValues);
                     }
-                    index++;
                 }
-                uniqueDefaultValueObjectMap.Add(runningType.Name, uniqueDefaultValues);
             }
+
             return uniqueDefaultValueObjectMap[runningType.Name];
         }
 

@@ -52,6 +52,7 @@ v2.6.5
 v2.6.6
 重构了代码，移除了DatabaseContext类的查询事件（移到了Kiss.QueryObject)
 TSqlFormatProvider类增加了同步锁
+QueryExtension类增加了同步锁
 
 todo：
 Repository脱离<add name="PerRequestLifestyle" type="Castle.MicroKernel.Lifestyle.PerWebRequestLifestyleModule, Castle.MicroKernel" /> httpmodule的依赖
