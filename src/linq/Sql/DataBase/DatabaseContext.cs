@@ -21,7 +21,7 @@ namespace Kiss.Linq.Sql.DataBase
 
         IDataProvider dbAccess = null;
 
-        string connstring;        
+        string connstring;
 
         void Init(ConnectionStringSettings connectionStringSettings, Type modelType)
         {
@@ -91,16 +91,11 @@ namespace Kiss.Linq.Sql.DataBase
             return dbAccess.ExecuteReader(connstring, cmdType, sql);
         }
 
-        private IFormatProvider formatProvider;
         public IFormatProvider FormatProvider
         {
             get
             {
-                if (formatProvider == null)
-                {
-                    formatProvider = dbAccess.FormatProvider;
-                }
-                return formatProvider;
+                return dbAccess.FormatProvider;
             }
         }
     }

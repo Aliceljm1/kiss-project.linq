@@ -10,6 +10,7 @@ using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.DataBase
 {
+    [DbProvider(ProviderName = "System.Data.SqlClient")]
     public class SqlDataProvider : IDataProvider, Kiss.Query.IQuery, IDDL
     {
         public int ExecuteNonQuery(string connstring, CommandType cmdType, string sql)
@@ -42,11 +43,9 @@ namespace Kiss.Linq.Sql.DataBase
             return command.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
-        private TSqlFormatProvider formatprovider = new TSqlFormatProvider();
-
         public IFormatProvider FormatProvider
         {
-            get { return formatprovider; }
+            get { return new TSqlFormatProvider(); }
         }
 
         #region Iquery

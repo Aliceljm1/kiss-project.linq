@@ -10,6 +10,7 @@ using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.DataBase
 {
+    [DbProvider(ProviderName = "System.Data.SQLite")]
     public class SqliteDataProvider : IDataProvider, Kiss.Query.IQuery, IDDL
     {
         public int ExecuteNonQuery(string connstring, CommandType cmdType, string sql)
@@ -44,15 +45,7 @@ namespace Kiss.Linq.Sql.DataBase
             return command.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
-        private SqliteFormatProvider formatprovider = new SqliteFormatProvider();
-
-        public IFormatProvider FormatProvider
-        {
-            get
-            {
-                return formatprovider;
-            }
-        }
+        public IFormatProvider FormatProvider { get { return new SqliteFormatProvider(); } }
 
         private static readonly ILogger logger = LogManager.GetLogger(typeof(SqliteDataProvider));
 
