@@ -214,7 +214,7 @@ namespace Kiss.Linq.Sql
             if (q.PageSize == -1)
                 q.PageSize = 20;
 
-            string sql = q.WhereClause + q.PageSize.ToString() + q.OrderByClause + q.TableField;
+            string sql = q.WhereClause + q.PageIndex.ToString() + q.PageSize.ToString() + q.OrderByClause + q.TableField;
 
             Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
             {

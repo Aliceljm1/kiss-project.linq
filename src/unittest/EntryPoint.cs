@@ -15,7 +15,7 @@ namespace Kiss.Linq.Linq2Sql.Test
     {
         public EntryPoint()
         {
-            ServiceLocator.Instance.Container = new WindsorContainer();
+            ServiceLocator.Instance.Init();
 
             ServiceLocator.Instance.AddComponent("System.Data.SqlClient", typeof(SqlDataProvider));
             ServiceLocator.Instance.AddComponent("System.Data.SQLite", typeof(SqliteDataProvider));

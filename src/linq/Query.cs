@@ -880,6 +880,9 @@ namespace Kiss.Linq
                         else
                             val = Expression.Lambda(methodCallExpression.Arguments[0]).Compile().DynamicInvoke();
 
+                        // bug fix
+                        bucketImpl.Items[memberName].Values.Add(new BucketItem.QueryCondition(val, RelationType.Equal));
+
                         var leafItem = new BucketItem
                         {
                             DeclaringObjectType = memberExp.Member.DeclaringType,

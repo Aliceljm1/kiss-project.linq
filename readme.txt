@@ -53,7 +53,11 @@ v2.6.6
 重构了代码，移除了DatabaseContext类的查询事件（移到了Kiss.QueryObject)
 TSqlFormatProvider类增加了同步锁
 QueryExtension类增加了同步锁
+
+v2.6.7
 修复了在并发情况下TSqlFormatProvider的bug，每次实例化新的实例（重要更新）
+修复了分页列表数据缓存的bug
+修复了Repository<T,t>Get(t id)的bug，Equals方法中添加代码bucketImpl.Items[memberName].Values.Add(new BucketItem.QueryCondition(val, RelationType.Equal));
 
 todo：
 Repository脱离<add name="PerRequestLifestyle" type="Castle.MicroKernel.Lifestyle.PerWebRequestLifestyleModule, Castle.MicroKernel" /> httpmodule的依赖
