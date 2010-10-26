@@ -237,28 +237,10 @@ namespace Kiss.Linq.Sql
                     var item = new T();
                     var t = typeof(T);
 
-                    if (q.TableField == "*")
+                    FluentBucket.As(bucket).For.EachItem.Process(delegate(BucketItem bucketItem)
                     {
-                        FluentBucket.As(bucket).For.EachItem.Process(delegate(BucketItem bucketItem)
-                        {
-                            fillObject(rdr, item, t, bucketItem);
-                        });
-                    }
-                    else
-                    {
-                        foreach (string field in StringUtil.Split(q.TableField, ",", true, true))
-                        {
-                            BucketItem bitem = null;
-                            foreach (BucketItem bucketItem in bucket.Items.Values)
-                            {
-                                if (string.Equals(bucketItem.Name, field, StringComparison.InvariantCultureIgnoreCase))
-                                    bitem = bucketItem;
-                            }
-
-                            if (bitem != null)
-                                fillObject(rdr, item, t, bitem);
-                        }
-                    }
+                        fillObject(rdr, item, t, bucketItem);
+                    });
 
                     list.Add(item);
                 }

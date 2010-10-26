@@ -111,6 +111,20 @@ namespace Kiss.Linq.Linq2Sql.Test
         //    }
         //}
 
+        //[Test]
+        //public void Distinct()
+        //{
+
+        //    this.Add();
+        //    this.Add();
+
+        //    var query = (from  book in bookContext
+        //                 where book.Author == "Don Box"
+        //                 select book.Id);
+
+        //    Assert.AreEqual(1, query.Count());
+        //}
+
         [Test]
         public void Like()
         {
