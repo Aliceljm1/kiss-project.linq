@@ -72,13 +72,10 @@ namespace Kiss.Linq.Sql.DataBase
             {
                 conn.Open();
 
-                string sql = string.Format("select count({0}) as count from {1}",
-                    condition.TableField.Contains(",") ? "*" : condition.TableField,
+                string sql = string.Format("select count(*) as count from {0}",
                     condition.TableName);
 
-                if (condition.AppendWhereKeyword && !string.IsNullOrEmpty(where))
-                    sql += string.Format(" where {0}", where);
-                else
+                if (StringUtil.HasText(where))
                     sql += string.Format(" {0}", where);
 
                 DbCommand cmd = conn.CreateCommand();
@@ -97,12 +94,19 @@ namespace Kiss.Linq.Sql.DataBase
 
         public IDataReader GetReader(QueryCondition condition)
         {
+            string sql = combin_sql(condition);
+
+            logger.Debug(sql);
+
+            return ExecuteReader(condition.ConnectionString, CommandType.Text, sql);
+        }
+
+        private static string combin_sql(QueryCondition condition)
+        {
             string where = condition.WhereClause;
 
             string sql = string.Format("select {0} from {1}", condition.TableField, condition.TableName);
-            if (condition.AppendWhereKeyword && !string.IsNullOrEmpty(where))
-                sql += string.Format(" where {0}", where);
-            else
+            if (StringUtil.HasText(where))
                 sql += string.Format(" {0}", where);
 
             if (StringUtil.HasText(condition.OrderByClause))
@@ -116,39 +120,43 @@ namespace Kiss.Linq.Sql.DataBase
             {
                 sql += string.Format(" limit {0}", condition.TotalCount);
             }
+            return sql;
+        }
 
-            DbConnection conn = new SQLiteConnection(condition.ConnectionString);
-            conn.Open();
-
-            DbCommand cmd = conn.CreateCommand();
-            cmd.CommandText = sql;
-
+        public DataTable GetDataTable(QueryCondition q)
+        {
+            string sql = combin_sql(q);
             logger.Debug(sql);
 
-            return cmd.ExecuteReader(CommandBehavior.CloseConnection);
+            DataTable dt = new DataTable();
+
+            using (SQLiteConnection conn = new SQLiteConnection(q.ConnectionString))
+            {
+                conn.Open();
+
+                SQLiteCommand cmd = conn.CreateCommand();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = sql;
+
+                SQLiteDataAdapter da = new SQLiteDataAdapter(cmd);
+                da.Fill(dt);
+            }
+
+            return dt;
         }
 
         public void Delete(QueryCondition condition)
         {
             string where = condition.WhereClause;
 
-            using (DbConnection conn = new SQLiteConnection(condition.ConnectionString))
-            {
-                conn.Open();
+            string sql = string.Format("DELETE FROM {0}", condition.TableName);
 
-                string sql = string.Format("DELETE FROM {0}", condition.TableName);
-                if (condition.AppendWhereKeyword && !string.IsNullOrEmpty(where))
-                    sql += string.Format(" where {0}", where);
-                else
-                    sql += string.Format(" {0}", where);
+            if (StringUtil.HasText(where))
+                sql += string.Format(" {0}", where);
 
-                DbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = sql;
+            logger.Debug(sql);
 
-                logger.Debug(sql);
-
-                cmd.ExecuteNonQuery();
-            }
+            ExecuteNonQuery(condition.ConnectionString, CommandType.Text, sql);
         }
 
         #region IDDL Members

@@ -81,10 +81,11 @@ namespace Kiss.Linq.Sql.DataBase
         {
             string where = query.WhereClause;
 
-            string sql = string.Format("Select ISNULL(COUNT({0}),0) FROM {1} {2}",
-                query.TableField.Contains(",") ? "*" : query.TableField,
-                query.TableName,
-                query.AppendWhereKeyword && StringUtil.HasText(where) ? where.Insert(0, "where ") : where);
+            string sql = string.Format("Select ISNULL(COUNT(*),0) FROM {0}",
+                query.TableName);
+
+            if (StringUtil.HasText(where))
+                sql += string.Format(" {0}", where);
 
             logger.Debug(sql);
 
@@ -105,9 +106,19 @@ namespace Kiss.Linq.Sql.DataBase
         /// <returns></returns>
         public IDataReader GetReader(QueryCondition query)
         {
+            string sql = combin_sql(query);
+
+            logger.Debug(sql);
+
+            return ExecuteReader(query.ConnectionString,
+                    CommandType.Text,
+                    sql);
+        }
+
+        private static string combin_sql(QueryCondition query)
+        {
             string where = query.WhereClause;
 
-            where = query.AppendWhereKeyword && StringUtil.HasText(where) ? where.Insert(0, "where ") : where;
             string orderby = string.Empty;
             if (StringUtil.HasText(query.OrderByClause))
                 orderby = string.Format("ORDER BY {0}", query.OrderByClause);
@@ -141,27 +152,46 @@ namespace Kiss.Linq.Sql.DataBase
                         orderby,
                         query.TotalCount);
             }
+            return sql;
+        }
+
+        public DataTable GetDataTable(QueryCondition q)
+        {
+            string sql = combin_sql(q);
 
             logger.Debug(sql);
 
-            return ExecuteReader(query.ConnectionString,
-                    CommandType.Text,
-                    sql);
+            DataTable dt = new DataTable();
+
+            using (SqlConnection conn = new SqlConnection(q.ConnectionString))
+            {
+                conn.Open();
+
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = sql;
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+
+                da.Fill(dt);
+            }
+
+            return dt;
         }
 
         public void Delete(QueryCondition query)
         {
             string where = query.WhereClause;
 
-            string sql = string.Format("DELETE FROM [{0}] {1}",
-                query.TableName,
-                query.AppendWhereKeyword && StringUtil.HasText(where) ? where.Insert(0, "where ") : where);
+            string sql = string.Format("DELETE FROM [{0}]",
+                query.TableName);
+
+            if (StringUtil.HasText(where))
+                sql += string.Format(" {0}", where);
 
             logger.Debug(sql);
 
-            SqlHelper.ExecuteNonQuery(query.ConnectionString,
-                CommandType.Text,
-                sql);
+            ExecuteNonQuery(query.ConnectionString, CommandType.Text, sql);
         }
 
         #endregion

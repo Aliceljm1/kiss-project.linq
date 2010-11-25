@@ -20,8 +20,6 @@ namespace Kiss.Linq.Linq2Sql.Test
             ServiceLocator.Instance.AddComponent("System.Data.SqlClient", typeof(SqlDataProvider));
             ServiceLocator.Instance.AddComponent("System.Data.SQLite", typeof(SqliteDataProvider));
 
-            ServiceLocator.Instance.AddComponent("p", typeof(Kiss.Plugin.PluginBootstrapper));
-
             ServiceLocator.Instance.AddComponent("kiss.repository_1", typeof(IRepository<>), typeof(Repository<>));
             ServiceLocator.Instance.AddComponent("kiss.repository_2", typeof(IRepository<,>), typeof(Repository<,>));
 
@@ -138,7 +136,7 @@ namespace Kiss.Linq.Linq2Sql.Test
 
             Book.ConnectionStringSettings = ConfigurationManager.ConnectionStrings["sqlite"]; ;
 
-            Assert.AreEqual(1, (from book in Book.Query
+            Assert.AreEqual(1, (from book in bookContext
                                 where book.Author.Contains("Don Box")
                                 select book).Count());
 

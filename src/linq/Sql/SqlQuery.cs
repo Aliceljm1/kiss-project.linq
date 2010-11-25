@@ -14,7 +14,7 @@ namespace Kiss.Linq.Sql
     /// sql query
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class SqlQuery<T> : Query<T>, IKissQueryable<T>
+    public class SqlQuery<T> : Query<T>, ILinqContext<T>
         where T : IQueryObject, new()
     {
         #region fields
@@ -41,9 +41,14 @@ namespace Kiss.Linq.Sql
         #region ctor
 
         public SqlQuery(ConnectionStringSettings connectionStringSettings)
+            : this(connectionStringSettings, true)
+        {
+        }
+
+        public SqlQuery(ConnectionStringSettings connectionStringSettings, bool enableQueryEvent)
         {
             this.connectionStringSettings = connectionStringSettings;
-            this.EnableQueryEvent = true;
+            this.EnableQueryEvent = enableQueryEvent;
         }
 
         #endregion
@@ -242,7 +247,7 @@ namespace Kiss.Linq.Sql
                         if (o == null)
                             continue;
 
-                        PropertyInfo pi = t.GetProperty(key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly );
+                        PropertyInfo pi = t.GetProperty(key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
                         if (pi != null && pi.CanWrite)
                             pi.SetValue(obj,
                                 o,

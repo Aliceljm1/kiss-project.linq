@@ -80,7 +80,14 @@ namespace Kiss.Linq.Sql.DataBase
             if (logger != null)
                 logger.Debug(sql);
 
-            return dbAccess.ExecuteNonQuery(connstring, cmdType, sql);
+            try
+            {
+                return dbAccess.ExecuteNonQuery(connstring, cmdType, sql);
+            }
+            catch (Exception ex)
+            {
+                throw new LinqException(sql, ex);
+            }
         }
 
         public IDataReader ExecuteReader(CommandType cmdType, string sql)
@@ -88,7 +95,14 @@ namespace Kiss.Linq.Sql.DataBase
             if (logger != null)
                 logger.Debug(sql);
 
-            return dbAccess.ExecuteReader(connstring, cmdType, sql);
+            try
+            {
+                return dbAccess.ExecuteReader(connstring, cmdType, sql);
+            }
+            catch (Exception ex)
+            {
+                throw new LinqException(sql, ex);
+            }
         }
 
         public IFormatProvider FormatProvider
