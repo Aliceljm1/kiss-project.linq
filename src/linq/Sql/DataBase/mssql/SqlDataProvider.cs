@@ -115,7 +115,9 @@ namespace Kiss.Linq.Sql.DataBase
                     sql);
         }
 
-        private static string combin_sql(QueryCondition query)
+        private bool? sqlserver2000;
+
+        private string combin_sql(QueryCondition query)
         {
             string where = query.WhereClause;
 
@@ -127,14 +129,31 @@ namespace Kiss.Linq.Sql.DataBase
 
             if (query.Paging)
             {
-                int startIndex = query.PageSize * query.PageIndex + 1;
-                sql = string.Format("WITH tempTab AS ( SELECT ROW_NUMBER() OVER (Order By {0}) AS Row, {1} from {2} {3})  Select * FROM tempTab Where Row between {4} and {5}",
-                    StringUtil.HasText(query.OrderByClause) ? query.OrderByClause : "rand()",
-                    query.TableField,
-                    query.TableName,
-                    where,
-                    startIndex,
-                    startIndex + query.PageSize - 1);
+                if (sqlserver2000 == null)
+                    sqlserver2000 = SqlHelper.GetVersion(query.ConnectionString) == SqlHelper.Version.SQLServer2000;
+
+                if (sqlserver2000.HasValue && sqlserver2000.Value)
+                {
+                    sql = string.Format("if exists(select 1 from tempdb..sysobjects where xtype= 'u' and name like '#PageIndex%') drop table #PageIndex; CREATE TABLE #PageIndex (IndexId int IDENTITY (1, 1) NOT NULL,TID nvarchar(100) );INSERT INTO #PageIndex (TID) SELECT CAST({6} AS nvarchar(100)) FROM {1} {5} {2} SELECT {0} FROM {1}, #PageIndex PageIndex WHERE {1}.{6} = PageIndex.TID AND PageIndex.IndexID > {3} AND PageIndex.IndexID < {4} ORDER BY PageIndex.IndexID;drop table #PageIndex",
+                        query.TableField,
+                        query.TableName,
+                        orderby,
+                        query.PageSize * query.PageIndex,
+                        query.PageSize * (query.PageIndex + 1) + 1,
+                        where,
+                        query["pk"]);
+                }
+                else
+                {
+                    int startIndex = query.PageSize * query.PageIndex + 1;
+                    sql = string.Format("WITH tempTab AS ( SELECT ROW_NUMBER() OVER (Order By {0}) AS Row, {1} from {2} {3})  Select * FROM tempTab Where Row between {4} and {5}",
+                        StringUtil.HasText(query.OrderByClause) ? query.OrderByClause : "rand()",
+                        query.TableField,
+                        query.TableName,
+                        where,
+                        startIndex,
+                        startIndex + query.PageSize - 1);
+                }
             }
             else
             {
@@ -202,15 +221,13 @@ namespace Kiss.Linq.Sql.DataBase
         private int colTypeIndex = -1;
         private int colDescIndex = -1;
 
-        private int TableIdIndex = -1;
         private int TableNameIndex = -1;
 
-        private void InitTableIndex(Database database, IDataRecord reader)
+        private void InitTableIndex(IDataRecord reader)
         {
             if (reader == null) throw new ArgumentNullException("reader");
-            if (TableIdIndex == -1)
+            if (TableNameIndex == -1)
             {
-                TableIdIndex = reader.GetOrdinal("TableId");
                 TableNameIndex = reader.GetOrdinal("TableName");
             }
         }
@@ -230,7 +247,6 @@ namespace Kiss.Linq.Sql.DataBase
 
         private void FillColumn(Table table, SqlDataReader reader)
         {
-            InitColIndex(reader);
             Column col = new Column();
 
             col.Name = (string)reader[colNameIndex];
@@ -249,7 +265,6 @@ namespace Kiss.Linq.Sql.DataBase
             colNameIndex = -1;
             colTypeIndex = -1;
             colDescIndex = -1;
-            TableIdIndex = -1;
             TableNameIndex = -1;
             // create database if not exist
             SqlConnectionStringBuilder cb = new SqlConnectionStringBuilder(conn_string);
@@ -258,7 +273,14 @@ namespace Kiss.Linq.Sql.DataBase
             cb.InitialCatalog = "master";
             using (SqlConnection conn = new SqlConnection(cb.ConnectionString))
             {
-                SqlCommand cmd = new SqlCommand(string.Format("IF not EXISTS (SELECT name FROM sys.databases WHERE name = N'{0}') CREATE DATABASE [{0}]", database_name), conn);
+                string sql = string.Empty;
+
+                if (SqlHelper.GetVersion(cb.ConnectionString) == SqlHelper.Version.SQLServer2000)
+                    sql = string.Format("IF NOT EXISTS (SELECT name FROM sysdatabases WHERE name = N'{0}') CREATE DATABASE [{0}]", database_name);
+                else
+                    sql = string.Format("IF not EXISTS (SELECT name FROM sys.databases WHERE name = N'{0}') CREATE DATABASE [{0}]", database_name);
+
+                SqlCommand cmd = new SqlCommand(sql, conn);
                 conn.Open();
 
                 cmd.ExecuteNonQuery();
@@ -268,7 +290,7 @@ namespace Kiss.Linq.Sql.DataBase
 
         public void Fill(Database database)
         {
-            int lastObjectId = 0;
+            string lastTableName = string.Empty;
             bool isTable = true;
             Table item = null;
 
@@ -280,12 +302,14 @@ namespace Kiss.Linq.Sql.DataBase
                     command.CommandTimeout = 0;
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
+                        InitTableIndex(reader);
+                        InitColIndex(reader);
+
                         while (reader.Read())
                         {
-                            InitTableIndex(database, reader);
-                            if (lastObjectId != (int)reader[TableIdIndex])
+                            if (lastTableName != (string)reader[TableNameIndex])
                             {
-                                lastObjectId = (int)reader[TableIdIndex];
+                                lastTableName = (string)reader[TableNameIndex];
                                 isTable = reader["ObjectType"].ToString().Trim().Equals("U");
                                 if (isTable)
                                 {
@@ -432,7 +456,7 @@ namespace Kiss.Linq.Sql.DataBase
         private static string GetTableDetail2008()
         {
             string sql = "";
-            sql += "SELECT DISTINCT (CASE WHEN ISNULL(CTT.is_track_columns_updated_on,0) <> 0 THEN is_track_columns_updated_on ELSE 0 END) AS HasChangeTrackingTrackColumn, (CASE WHEN ISNULL(CTT.object_id,0) <> 0 THEN 1 ELSE 0 END) AS HasChangeTracking, TTT.lock_escalation_desc, T.type AS ObjectType, C.Name, C.is_filestream, C.is_sparse, S4.Name as OwnerType,C.user_type_id, C.Column_Id AS ID, C.max_length AS Size, C.Precision, C.Scale, ISNULL(C.Collation_Name,'') as Collation, C.Is_nullable AS IsNullable, C.Is_RowGuidcol AS IsRowGuid, C.Is_Computed AS IsComputed, C.Is_Identity AS IsIdentity, COLUMNPROPERTY(T.object_id,C.name,'IsIdNotForRepl') AS IsIdentityRepl,IDENT_SEED('[' + S1.name + '].[' + T.Name + ']') AS IdentSeed, IDENT_INCR('[' + S1.name + '].[' + T.Name + ']') AS IdentIncrement, ISNULL(CC.Definition,'') AS Formula, ISNULL(CC.Is_Persisted,0) AS FormulaPersisted, CASE WHEN ISNULL(DEP.column_id,0) = 0 THEN 0 ELSE 1 END AS HasComputedFormula, CASE WHEN ISNULL(IC.column_id,0) = 0 THEN 0 ELSE 1 END AS HasIndex, TY.Name AS Type, '[' + S3.Name + '].' + XSC.Name AS XMLSchema, C.Is_xml_document, TY.is_user_defined, ISNULL(TT.Name,T.Name) AS TableName, T.object_id AS TableId,S1.name AS TableOwner,Text_In_Row_limit, large_value_types_out_of_row,ISNULL(objectproperty(T.object_id, N'TableHasVarDecimalStorageFormat'),0) AS HasVarDecimal,OBJECTPROPERTY(T.OBJECT_ID,'TableHasClustIndex') AS HasClusteredIndex,DSIDX.Name AS FileGroup,ISNULL(lob.Name,'') AS FileGroupText, ISNULL(filestr.Name,'') AS FileGroupStream,ISNULL(DC.object_id,0) AS DefaultId, DC.name AS DefaultName, DC.definition AS DefaultDefinition, C.rule_object_id, C.default_object_id ,prop.value ";
+            sql += "SELECT DISTINCT (CASE WHEN ISNULL(CTT.is_track_columns_updated_on,0) <> 0 THEN is_track_columns_updated_on ELSE 0 END) AS HasChangeTrackingTrackColumn, (CASE WHEN ISNULL(CTT.object_id,0) <> 0 THEN 1 ELSE 0 END) AS HasChangeTracking, TTT.lock_escalation_desc, T.type AS ObjectType, C.Name, C.is_filestream, C.is_sparse, S4.Name as OwnerType,C.user_type_id, C.Column_Id AS ID, C.max_length AS Size, C.Precision, C.Scale, ISNULL(C.Collation_Name,'') as Collation, C.Is_nullable AS IsNullable, C.Is_RowGuidcol AS IsRowGuid, C.Is_Computed AS IsComputed, C.Is_Identity AS IsIdentity, COLUMNPROPERTY(T.object_id,C.name,'IsIdNotForRepl') AS IsIdentityRepl,IDENT_SEED('[' + S1.name + '].[' + T.Name + ']') AS IdentSeed, IDENT_INCR('[' + S1.name + '].[' + T.Name + ']') AS IdentIncrement, ISNULL(CC.Definition,'') AS Formula, ISNULL(CC.Is_Persisted,0) AS FormulaPersisted, CASE WHEN ISNULL(DEP.column_id,0) = 0 THEN 0 ELSE 1 END AS HasComputedFormula, CASE WHEN ISNULL(IC.column_id,0) = 0 THEN 0 ELSE 1 END AS HasIndex, TY.Name AS Type, '[' + S3.Name + '].' + XSC.Name AS XMLSchema, C.Is_xml_document, TY.is_user_defined, ISNULL(TT.Name,T.Name) AS TableName, T.object_id AS ObjectId,S1.name AS TableOwner,Text_In_Row_limit, large_value_types_out_of_row,ISNULL(objectproperty(T.object_id, N'TableHasVarDecimalStorageFormat'),0) AS HasVarDecimal,OBJECTPROPERTY(T.OBJECT_ID,'TableHasClustIndex') AS HasClusteredIndex,DSIDX.Name AS FileGroup,ISNULL(lob.Name,'') AS FileGroupText, ISNULL(filestr.Name,'') AS FileGroupStream,ISNULL(DC.object_id,0) AS DefaultId, DC.name AS DefaultName, DC.definition AS DefaultDefinition, C.rule_object_id, C.default_object_id ,prop.value ";
             sql += "FROM sys.columns C ";
             sql += "INNER JOIN sys.objects T ON T.object_id = C.object_id ";
             sql += "INNER JOIN sys.types TY ON TY.user_type_id = C.user_type_id ";
@@ -462,7 +486,7 @@ namespace Kiss.Linq.Sql.DataBase
             string sql = "";
             sql += "SELECT DISTINCT T.type AS ObjectType, C.Name, S4.Name as OwnerType,";
             sql += "C.user_type_id, C.Column_Id AS ID, C.max_length AS Size, C.Precision, C.Scale, ISNULL(C.Collation_Name,'') as Collation, C.Is_nullable AS IsNullable, C.Is_RowGuidcol AS IsRowGuid, C.Is_Computed AS IsComputed, C.Is_Identity AS IsIdentity, COLUMNPROPERTY(T.object_id,C.name,'IsIdNotForRepl') AS IsIdentityRepl,IDENT_SEED('[' + S1.name + '].[' + T.Name + ']') AS IdentSeed, IDENT_INCR('[' + S1.name + '].[' + T.Name + ']') AS IdentIncrement, ISNULL(CC.Definition,'') AS Formula, ISNULL(CC.Is_Persisted,0) AS FormulaPersisted, CASE WHEN ISNULL(DEP.column_id,0) = 0 THEN 0 ELSE 1 END AS HasComputedFormula, CASE WHEN ISNULL(IC.column_id,0) = 0 THEN 0 ELSE 1 END AS HasIndex, TY.Name AS Type, '[' + S3.Name + '].' + XSC.Name AS XMLSchema, C.Is_xml_document, TY.is_user_defined, ";
-            sql += "T.Name AS TableName, T.object_id AS TableId,S1.name AS TableOwner,Text_In_Row_limit, large_value_types_out_of_row,ISNULL(objectproperty(T.object_id, N'TableHasVarDecimalStorageFormat'),0) AS HasVarDecimal,OBJECTPROPERTY(T.OBJECT_ID,'TableHasClustIndex') AS HasClusteredIndex,DSIDX.Name AS FileGroup,ISNULL(LOB.Name,'') AS FileGroupText, ";
+            sql += "T.Name AS TableName, T.object_id AS ObjectId,S1.name AS TableOwner,Text_In_Row_limit, large_value_types_out_of_row,ISNULL(objectproperty(T.object_id, N'TableHasVarDecimalStorageFormat'),0) AS HasVarDecimal,OBJECTPROPERTY(T.OBJECT_ID,'TableHasClustIndex') AS HasClusteredIndex,DSIDX.Name AS FileGroup,ISNULL(LOB.Name,'') AS FileGroupText, ";
             sql += "ISNULL(DC.object_id,0) AS DefaultId, DC.name AS DefaultName, DC.definition AS DefaultDefinition, C.rule_object_id, C.default_object_id ,prop.value ";
             sql += "FROM sys.columns C ";
             sql += "INNER JOIN sys.tables T ON T.object_id = C.object_id ";
@@ -485,23 +509,7 @@ namespace Kiss.Linq.Sql.DataBase
 
         private static string GetTableDetail2000()
         {
-            string sql = "";
-            sql += "SELECT SO.name, ";
-            sql += "SO.id as object_id, ";
-            sql += "SU.name as Owner, ";
-            sql += "OBJECTPROPERTY(SO.ID,'TableTextInRowLimit') AS Text_In_Row_limit,";
-            sql += "0 AS HasVarDecimal, ";
-            sql += "CONVERT(bit,0) AS large_value_types_out_of_row, ";
-            sql += "F.groupname AS FileGroup, ";
-            sql += "ISNULL(F2.groupname,'') AS FileGroupText, ";
-            sql += "OBJECTPROPERTY(SO.ID,'TableHasClustIndex') AS HasClusteredIndex ";
-            sql += "FROM sysobjects SO ";
-            sql += "inner join sysindexes I ON I.id = SO.id and I.indid < 2 ";
-            sql += "inner join sysfilegroups f on f.groupid = i.groupid ";
-            sql += "left join sysindexes I2 ON I2.id = SO.id and I2.indid = 255 ";
-            sql += "left join sysfilegroups f2 on f2.groupid = i2.groupid ";
-            sql += "INNER JOIN sysusers SU ON SU.uid = SO.uid WHERE type = 'U' ORDER BY SO.name";
-            return sql;
+            return "SELECT TableName=d.name,TableDesc=case when a.colorder=1 then isnull(f.value,'') else '' end, ObjectType=case when a.colorder=1 then 'U' else '' end, Name=a.name, IsIdentity=case when COLUMNPROPERTY( a.id,a.name,'IsIdentity')=1 then '√'else '' end, PK=case when exists(SELECT 1 FROM sysobjects where xtype='PK' and name in ( SELECT name FROM sysindexes WHERE indid in( SELECT indid FROM sysindexkeys WHERE id = a.id AND colid=a.colid ))) then 1 else 0 end, Type=b.name, length=COLUMNPROPERTY(a.id,a.name,'PRECISION'),  allowNull=case when a.isnullable=1 then 1 else 0 end,  value=isnull(g.[value],'')  FROM syscolumns a  left join systypes b on a.xusertype=b.xusertype  inner join sysobjects d on a.id=d.id and d.xtype='U' and d.name<>'dtproperties'  left join syscomments e on a.cdefault=e.id  left join sysproperties g on a.id=g.id and a.colid=g.smallid  left join sysproperties f on d.id=f.id and f.smallid=0 order by TableName,ObjectType desc";
         }
 
         #endregion

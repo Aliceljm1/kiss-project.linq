@@ -50,6 +50,8 @@ namespace Kiss.Linq.Sql
 
         public T Get(ILinqContext<T> context, t id)
         {
+            if (id == null) return default(T);
+            if (id is string && StringUtil.IsNullOrEmpty(id.ToString())) return default(T);
             if (object.Equals(id, default(t)))
                 return default(T);
 
