@@ -93,6 +93,9 @@ namespace Kiss.Linq.Sql
 
             foreach (t id in ids)
             {
+                if (object.Equals(id, default(t)))
+                    continue;
+
                 T obj = new T() { Id = id };
 
                 context.Add(obj);

@@ -115,7 +115,7 @@ namespace Kiss.Linq.Sql.DataBase
                     sql);
         }
 
-        private bool? sqlserver2000;
+        private Dictionary<string, bool> sqlserver2000 = new Dictionary<string, bool>();
 
         private string combin_sql(QueryCondition query)
         {
@@ -129,10 +129,16 @@ namespace Kiss.Linq.Sql.DataBase
 
             if (query.Paging)
             {
-                if (sqlserver2000 == null)
-                    sqlserver2000 = SqlHelper.GetVersion(query.ConnectionString) == SqlHelper.Version.SQLServer2000;
+                if (!sqlserver2000.ContainsKey(query.ConnectionString))
+                {
+                    lock (sqlserver2000)
+                    {
+                        if (!sqlserver2000.ContainsKey(query.ConnectionString))
+                            sqlserver2000.Add(query.ConnectionString, SqlHelper.GetVersion(query.ConnectionString) == SqlHelper.Version.SQLServer2000);
+                    }
+                }
 
-                if (sqlserver2000.HasValue && sqlserver2000.Value)
+                if (sqlserver2000[query.ConnectionString])
                 {
                     sql = string.Format("if exists(select 1 from tempdb..sysobjects where xtype= 'u' and name like '#PageIndex%') drop table #PageIndex; CREATE TABLE #PageIndex (IndexId int IDENTITY (1, 1) NOT NULL,TID nvarchar(100) );INSERT INTO #PageIndex (TID) SELECT CAST({6} AS nvarchar(100)) FROM {1} {5} {2} SELECT {0} FROM {1}, #PageIndex PageIndex WHERE {1}.{6} = PageIndex.TID AND PageIndex.IndexID > {3} AND PageIndex.IndexID < {4} ORDER BY PageIndex.IndexID;drop table #PageIndex",
                         query.TableField,

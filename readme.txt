@@ -8,11 +8,11 @@ KISS ORM
 
 版本历史：
 
-DeleteById方法在id传入0时会创建一条记录
-
 v1.8
 增加对sql server 2000的支持
 修复主键是string，查询时的bug
+修复sql server 2000和sql server 2005并存时的bug
+修复DeleteById方法在id传入0时会创建一条记录的bug
 
 v1.7
 优化取连接字符串的代码，增加缓存，并保存默认连接字符串
