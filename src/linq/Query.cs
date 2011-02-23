@@ -823,14 +823,14 @@ namespace Kiss.Linq
                     {
                         var value = Expression.Lambda(methodCallExpression.Object).Compile().DynamicInvoke() as IList;
 
-                        if (value != null)
+                        if (value != null && value.Count > 0)
                         {
-                            if (value.Count == 0)
-                            {
-                                Clear();
-                                (this as IDisposable).Dispose();
-                                throw new LinqException("list is empty.");
-                            }
+                            //if (value.Count == 0)
+                            //{
+                            //    Clear();
+                            //    (this as IDisposable).Dispose();
+                            //    throw new LinqException("list is empty.");
+                            //}
 
                             var memberExpression = methodCallExpression.Arguments[0] as MemberExpression;
 

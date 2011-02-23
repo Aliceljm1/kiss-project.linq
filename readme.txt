@@ -8,6 +8,10 @@ KISS ORM
 
 版本历史：
 
+v1.9
+修复Count方法获取拼接sql语句的忽略了TableField的bug
+IN查询集合为空时，直接忽略
+
 v1.8
 增加对sql server 2000的支持
 修复主键是string，查询时的bug

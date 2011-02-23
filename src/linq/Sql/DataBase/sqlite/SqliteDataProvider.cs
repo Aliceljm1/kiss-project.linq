@@ -64,16 +64,17 @@ namespace Kiss.Linq.Sql.DataBase
             return li;
         }
 
-        public int Count(QueryCondition condition)
+        public int Count(QueryCondition q)
         {
-            string where = condition.WhereClause;
+            string where = q.WhereClause;
 
-            using (DbConnection conn = new SQLiteConnection(condition.ConnectionString))
+            using (DbConnection conn = new SQLiteConnection(q.ConnectionString))
             {
                 conn.Open();
 
-                string sql = string.Format("select count(*) as count from {0}",
-                    condition.TableName);
+                string sql = string.Format("select count({1}) as count from {0}",
+                    q.TableName,
+                    q.TableField.Contains(",") ? "*" : q.TableField);
 
                 if (StringUtil.HasText(where))
                     sql += string.Format(" {0}", where);
