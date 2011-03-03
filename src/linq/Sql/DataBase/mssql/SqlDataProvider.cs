@@ -422,10 +422,8 @@ namespace Kiss.Linq.Sql.DataBase
             sql += string.Format("[{0}] {1}", item.Name, GetDbType(item.PropertyType));
 
             if (item.FindAttribute(typeof(PKAttribute)) != null)
-            {
-                sql += " ";
-                sql += "NOT NULL IDENTITY(1,1)";
-            }
+                sql += string.Format(" NOT NULL {0} PRIMARY KEY CLUSTERED", item.PropertyType == typeof(int) ? "IDENTITY(1,1)" : string.Empty);
+
             return sql;
         }
 

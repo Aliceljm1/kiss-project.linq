@@ -270,7 +270,12 @@ namespace Kiss.Linq.Sql.DataBase
         private string GenerateDeclaration(BucketItem item)
         {
             if (item.FindAttribute(typeof(PKAttribute)) != null)
-                return string.Format("[{0}] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT", item.Name);
+            {
+                if (item.PropertyType == typeof(int))
+                    return string.Format("[{0}] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT", item.Name);
+                else
+                    return string.Format("[{0}] NVARCHAR NOT NULL PRIMARY KEY", item.Name);
+            }
             else
                 return string.Format("[{0}] {1}", item.Name, GetDbType(item.PropertyType));
         }

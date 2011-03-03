@@ -11,6 +11,7 @@ KISS ORM
 v1.9
 修复Count方法获取拼接sql语句的忽略了TableField的bug
 IN查询集合为空时，直接忽略
+修复bug：kiss.linq主键为非int类型时，自动创建的表结构仍然是int类型
 
 v1.8
 增加对sql server 2000的支持
