@@ -83,7 +83,7 @@ namespace Kiss.Linq.Sql.DataBase
 
             string sql = string.Format("Select ISNULL(COUNT({1}),0) FROM {0}",
                 query.TableName,
-                query.TableField.Contains(",") ? "*" : query.TableField);
+                query.TableField.IndexOfAny(new char[] { ',', '.' }) > -1 ? "*" : query.TableField);
 
             if (StringUtil.HasText(where))
                 sql += string.Format(" {0}", where);

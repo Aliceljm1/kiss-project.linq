@@ -8,6 +8,9 @@ KISS ORM
 
 版本历史：
 
+v2.0
+修复Count方法TableField字段为类似“p.*”时的bug
+
 v1.9
 修复Count方法获取拼接sql语句的忽略了TableField的bug
 IN查询集合为空时，直接忽略
