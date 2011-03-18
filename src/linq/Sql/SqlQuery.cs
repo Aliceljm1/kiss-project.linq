@@ -36,6 +36,9 @@ namespace Kiss.Linq.Sql
 
         public bool EnableQueryEvent { get; set; }
 
+        private IDbTransaction transaction;
+        public IDbTransaction Transaction { get { return transaction ?? TransactionScope.Transaction; } set { transaction = value; } }
+
         #endregion
 
         #region ctor
@@ -72,8 +75,10 @@ namespace Kiss.Linq.Sql
                 {
                     throw new LinqException("BATCH SubmitChanges ERROR!  " + ex.Message, ex);
                 }
-
-                queryColleciton.Clear();
+                finally
+                {
+                    queryColleciton.Clear();
+                }
             }
             else
             {
@@ -199,12 +204,12 @@ namespace Kiss.Linq.Sql
 
         private int ExecuteOnly(string sql)
         {
-            return DataContext.ExecuteNonQuery(CommandType.Text, sql);
+            return DataContext.ExecuteNonQuery(Transaction, CommandType.Text, sql);
         }
 
         private bool ExecuteReaderAndFillBucket(IBucket bucket, string sql)
         {
-            using (IDataReader rdr = DataContext.ExecuteReader(CommandType.Text, sql))
+            using (IDataReader rdr = DataContext.ExecuteReader(Transaction, CommandType.Text, sql))
             {
                 if (rdr.RecordsAffected == 0)
                     return false;

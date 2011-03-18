@@ -75,6 +75,17 @@ namespace Kiss.Linq.Sql.DataBase
             return false;
         }
 
+        public int ExecuteNonQuery(IDbTransaction tran, CommandType cmdType, string sql)
+        {
+            if (tran == null)
+                return ExecuteNonQuery(cmdType, sql);
+
+            if (logger != null)
+                logger.Debug(sql);
+
+            return dbAccess.ExecuteNonQuery(tran, cmdType, sql);
+        }
+
         public int ExecuteNonQuery(CommandType cmdType, string sql)
         {
             if (logger != null)
@@ -88,6 +99,17 @@ namespace Kiss.Linq.Sql.DataBase
             {
                 throw new LinqException(sql, ex);
             }
+        }
+
+        public IDataReader ExecuteReader(IDbTransaction tran, CommandType cmdType, string sql)
+        {
+            if (tran == null)
+                return ExecuteReader(cmdType, sql);
+
+            if (logger != null)
+                logger.Debug(sql);
+
+            return dbAccess.ExecuteReader(tran, cmdType, sql);
         }
 
         public IDataReader ExecuteReader(CommandType cmdType, string sql)

@@ -10,6 +10,8 @@ KISS ORM
 
 v2.0
 修复Count方法TableField字段为类似“p.*”时的bug
+修复sql server创建表的一个bug
+增加对事务的支持。线程安全，不支持多线程事务
 
 v1.9
 修复Count方法获取拼接sql语句的忽略了TableField的bug

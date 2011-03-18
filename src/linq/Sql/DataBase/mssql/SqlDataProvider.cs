@@ -32,6 +32,15 @@ namespace Kiss.Linq.Sql.DataBase
             return ret;
         }
 
+        public int ExecuteNonQuery(IDbTransaction tran, CommandType cmdType, string sql)
+        {
+            IDbCommand command = new SqlCommand(sql, (SqlConnection)tran.Connection);
+            command.CommandType = cmdType;
+            command.Transaction = tran;
+
+            return command.ExecuteNonQuery();
+        }
+
         public IDataReader ExecuteReader(string connstring, CommandType cmdType, string sql)
         {
             DbConnection conn = new SqlConnection(connstring);
@@ -41,6 +50,15 @@ namespace Kiss.Linq.Sql.DataBase
             command.CommandType = cmdType;
 
             return command.ExecuteReader(CommandBehavior.CloseConnection);
+        }
+
+        public IDataReader ExecuteReader(IDbTransaction tran, CommandType cmdType, string sql)
+        {
+            IDbCommand command = new SqlCommand(sql, (SqlConnection)tran.Connection);
+            command.CommandType = cmdType;
+            command.Transaction = tran;
+
+            return command.ExecuteReader();
         }
 
         public IFormatProvider FormatProvider
@@ -114,6 +132,14 @@ namespace Kiss.Linq.Sql.DataBase
             return ExecuteReader(query.ConnectionString,
                     CommandType.Text,
                     sql);
+        }
+
+        public IDbTransaction BeginTransaction(string connectionstring)
+        {
+            SqlConnection connection = new SqlConnection(connectionstring);
+            connection.Open();
+
+            return connection.BeginTransaction();
         }
 
         private Dictionary<string, bool> sqlserver2000 = new Dictionary<string, bool>();
@@ -422,7 +448,7 @@ namespace Kiss.Linq.Sql.DataBase
             sql += string.Format("[{0}] {1}", item.Name, GetDbType(item.PropertyType));
 
             if (item.FindAttribute(typeof(PKAttribute)) != null)
-                sql += string.Format(" NOT NULL {0} PRIMARY KEY CLUSTERED", item.PropertyType == typeof(int) ? "IDENTITY(1,1)" : string.Empty);
+                sql += string.Format(" NOT NULL {0}", item.PropertyType == typeof(int) ? "IDENTITY(1,1)" : string.Empty);
 
             return sql;
         }

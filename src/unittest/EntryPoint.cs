@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
-using Castle.Windsor;
 using Kiss.Linq.Sql;
 using Kiss.Linq.Sql.DataBase;
 using NUnit.Framework;
@@ -15,9 +14,11 @@ namespace Kiss.Linq.Linq2Sql.Test
     {
         public EntryPoint()
         {
-            ServiceLocator.Instance.Init();
+            ServiceLocator.Instance.Init(() =>
+            {
+                ServiceLocator.Instance.AddComponent("fj", typeof(ITypeFinder), typeof(AppDomainTypeFinder));
+            }, true);
 
-            ServiceLocator.Instance.AddComponent("System.Data.SqlClient", typeof(SqlDataProvider));
             ServiceLocator.Instance.AddComponent("System.Data.SQLite", typeof(SqliteDataProvider));
 
             ServiceLocator.Instance.AddComponent("kiss.repository_1", typeof(IRepository<>), typeof(Repository<>));
@@ -133,8 +134,6 @@ namespace Kiss.Linq.Linq2Sql.Test
                         select book;
 
             Assert.AreEqual(1, query.Count());
-
-            Book.ConnectionStringSettings = ConfigurationManager.ConnectionStrings["sqlite"]; ;
 
             Assert.AreEqual(1, (from book in bookContext
                                 where book.Author.Contains("Don Box")
@@ -485,6 +484,35 @@ namespace Kiss.Linq.Linq2Sql.Test
             Assert.AreEqual((from b in bookContext
                              where b.Id == id
                              select b).Count(), 0);
+        }
+
+        [Test]
+        public void Transaction()
+        {
+            using (TransactionScope scope = new TransactionScope(ConfigurationManager.ConnectionStrings["sqlite"]))
+            {
+                Book obj = new Book();
+                obj.Author = "123";
+                bookContext.Add(obj);
+
+                obj = new Book();
+                obj.Author = "456";
+                bookContext.Add(obj);
+
+                bookContext.SubmitChanges(true);
+
+                Library obj2 = new Library();
+                obj2.Floor = "123";
+
+                libraryContext.Add(obj2);
+                libraryContext.SubmitChanges();
+
+                scope.Complete();
+            }
+
+            Assert.AreEqual((from q in libraryContext
+                             where q.Floor == "123"
+                             select q).Count(), 1);
         }
 
         //[Test]

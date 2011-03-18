@@ -33,6 +33,16 @@ namespace Kiss.Linq.Sql.DataBase
             return ret;
         }
 
+        public int ExecuteNonQuery(IDbTransaction tran, CommandType cmdType, string sql)
+        {
+            IDbCommand command = tran.Connection.CreateCommand();
+            command.CommandType = cmdType;
+            command.CommandText = sql;
+            command.Transaction = tran;
+
+            return command.ExecuteNonQuery();
+        }
+
         public IDataReader ExecuteReader(string connstring, CommandType cmdType, string sql)
         {
             DbConnection conn = new SQLiteConnection(connstring);
@@ -43,6 +53,16 @@ namespace Kiss.Linq.Sql.DataBase
             command.CommandText = sql;
 
             return command.ExecuteReader(CommandBehavior.CloseConnection);
+        }
+
+        public IDataReader ExecuteReader(IDbTransaction tran, CommandType cmdType, string sql)
+        {
+            IDbCommand command = tran.Connection.CreateCommand();
+            command.CommandType = cmdType;
+            command.CommandText = sql;
+            command.Transaction = tran;
+
+            return command.ExecuteReader();
         }
 
         public IFormatProvider FormatProvider { get { return new SqliteFormatProvider(); } }
@@ -100,6 +120,14 @@ namespace Kiss.Linq.Sql.DataBase
             logger.Debug(sql);
 
             return ExecuteReader(condition.ConnectionString, CommandType.Text, sql);
+        }
+
+        public IDbTransaction BeginTransaction(string connectionstring)
+        {
+            SQLiteConnection connection = new SQLiteConnection(connectionstring);
+            connection.Open();
+
+            return connection.BeginTransaction();
         }
 
         private static string combin_sql(QueryCondition condition)
