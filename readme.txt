@@ -8,6 +8,9 @@ KISS ORM
 
 版本历史：
 
+v2.1
+代码重构
+
 v2.0
 修复Count方法TableField字段为类似“p.*”时的bug
 修复sql server创建表的一个bug

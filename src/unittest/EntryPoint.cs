@@ -91,24 +91,37 @@ namespace Kiss.Linq.Linq2Sql.Test
 
         }
 
-        //[Test]
-        //public void TestJoin()
-        //{
-        //    /// Query provider fires onece
-        //    /// Join = 5 arguments => CreateQuery
-        //    /// Where = 2 arguments => CreateQuery
-        //    /// Expression type fires twice.
+        [Test]
+        public void TestJoin()
+        {
+            /// Query provider fires onece
+            /// Join = 5 arguments => CreateQuery
+            /// Where = 2 arguments => CreateQuery
+            /// Expression type fires twice.
 
-        //    var query = from book in bookContext
-        //                join shelve in shelveContext on book.ShelveId equals shelve.Id
-        //                //where shelve.Id == 1
-        //                select book;
+            var query = from book in bookContext
+                        join shelve in shelveContext on book.ShelveId equals shelve.Id
+                        //where shelve.Id == 1
+                        select book;
 
-        //    foreach (Book book in query)
-        //    {
+            foreach (Book book in query)
+            {
 
-        //    }
-        //}
+            }
+        }
+
+        [Test]
+        public void GroupBy()
+        {
+            var query = from book in bookContext
+                        group book by book.Author into author
+                        select new { author = author };
+
+            foreach (var book in query)
+            {
+
+            }
+        }
 
         //[Test]
         //public void Distinct()

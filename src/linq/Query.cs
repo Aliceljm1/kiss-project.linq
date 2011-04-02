@@ -50,6 +50,7 @@ namespace Kiss.Linq
         {
             get { return typeof(T); }
         }
+
         /// <summary>
         /// Gets the expression tree.
         /// </summary>
@@ -60,6 +61,7 @@ namespace Kiss.Linq
                 return Expression.Constant(this);
             }
         }
+
         /// <summary>
         /// Gets a query provider the LINQ query.
         /// </summary>
@@ -610,7 +612,6 @@ namespace Kiss.Linq
                     }
                 }
             }
-
         }
 
         private void FillOptionalBucketItems(object value, Expression expression)
@@ -1251,7 +1252,6 @@ namespace Kiss.Linq
         /// Default value for first where clause item
         /// </summary>
         NotApplicable
-
     }
 
     internal class CallType

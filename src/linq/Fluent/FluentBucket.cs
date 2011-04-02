@@ -1,5 +1,3 @@
-using System.Text;
-using Kiss.Utils;
 
 namespace Kiss.Linq.Fluent
 {
@@ -51,28 +49,7 @@ namespace Kiss.Linq.Fluent
             {
                 return bucket.IsDirty;
             }
-        }
-
-        /// <summary>
-        /// Translates the fluent bucket to a equavalant literal format.
-        /// </summary>
-        /// <param name="formatProvider">fromat provider implemenatation</param>
-        /// <returns>translated string</returns>
-        public string Translate ( FormatMethod method, IFormatProvider formatProvider )
-        {
-            formatProvider.Initialize ( bucket );
-            
-            string selectorString = GetFormatString ( method, formatProvider );
-
-            StringBuilder builder = new StringBuilder ( selectorString );
-
-            foreach ( string format in StringUtil.GetAntExpressions ( selectorString ) )
-            {
-                builder.Replace ( "${" + format + "}", formatProvider.DefineString ( format ) );
-            }
-
-            return builder.ToString ( );
-        }
+        }        
 
         /// <summary>
         /// contains the bucketItem and their relational info.
@@ -98,42 +75,5 @@ namespace Kiss.Linq.Fluent
 
         private IBucket bucket;
         private FluentEntity entity;
-
-        private static string GetFormatString ( FormatMethod method, IFormatProvider formatProvider )
-        {
-            string selectorString = string.Empty;
-
-            switch ( method )
-            {
-                case FormatMethod.Process:
-                    selectorString = formatProvider.ProcessFormat ( );
-                    break;
-                case FormatMethod.GetItem:
-                    selectorString = formatProvider.GetItemFormat ( );
-                    break;
-                case FormatMethod.AddItem:                    
-                    selectorString = formatProvider.AddItemFormat ( );
-                    break;
-                case FormatMethod.UpdateItem:
-                    selectorString = formatProvider.UpdateItemFormat ( );
-                    break;
-                case FormatMethod.RemoveItem:
-                    selectorString = formatProvider.RemoveItemFormat ( );
-                    break;
-                case FormatMethod.BatchAdd:
-                    selectorString = formatProvider.BatchAddItemFormat();
-                    break;
-                case FormatMethod.BatchUpdate:
-                    selectorString = formatProvider.BatchUpdateItemFormat();
-                    break;
-                case FormatMethod.BatchRemove:
-                    selectorString = formatProvider.BatchRemoveItemFormat();
-                    break;
-                default:
-                    break;
-            }
-
-            return selectorString;
-        }
     }
 }

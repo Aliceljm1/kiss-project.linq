@@ -88,7 +88,7 @@
     <Compile Include="Fluent\FluentExpressionTree.cs" />
     <Compile Include="Fluent\FluentIterator.cs" />
     <Compile Include="Interface\IBucket.cs" />
-    <Compile Include="Interface\IFormatProvider.cs" />
+    <Compile Include="Sql\IFormatProvider.cs" />
     <Compile Include="Interface\IQueryObjectImpl.cs" />
     <Compile Include="Interface\IVersionItem.cs" />
     <Compile Include="LinqException.cs" />

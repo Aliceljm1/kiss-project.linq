@@ -91,25 +91,25 @@ namespace Kiss.Linq.Sql
         protected override bool AddItem(IBucket bucket)
         {
             return ExecuteReaderAndFillBucket(bucket,
-                FluentBucket.As(bucket).Translate(FormatMethod.AddItem, DataContext.FormatProvider));
+                Translate(bucket, FormatMethod.AddItem, DataContext.FormatProvider));
         }
 
         protected override bool UpdateItem(IBucket bucket)
         {
             return ExecuteReaderAndFillBucket(bucket,
-                FluentBucket.As(bucket).Translate(FormatMethod.UpdateItem, DataContext.FormatProvider));
+                Translate(bucket, FormatMethod.UpdateItem, DataContext.FormatProvider));
         }
 
         protected override bool RemoveItem(IBucket bucket)
         {
-            ExecuteOnly(FluentBucket.As(bucket).Translate(FormatMethod.RemoveItem, DataContext.FormatProvider));
+            ExecuteOnly(Translate(bucket, FormatMethod.RemoveItem, DataContext.FormatProvider));
 
             return true;
         }
 
         protected override T GetItem(IBucket bucket)
         {
-            string sql = FluentBucket.As(bucket).Translate(FormatMethod.GetItem, DataContext.FormatProvider);
+            string sql = Translate(bucket, FormatMethod.GetItem, DataContext.FormatProvider);
 
             if (EnableQueryEvent)
             {
@@ -142,7 +142,7 @@ namespace Kiss.Linq.Sql
 
         protected override void SelectItem(IBucket bucket, IModify<T> items)
         {
-            string sql = FluentBucket.As(bucket).Translate(FormatMethod.Process, DataContext.FormatProvider);
+            string sql = Translate(bucket, FormatMethod.Process, DataContext.FormatProvider);
 
             if (EnableQueryEvent)
             {
@@ -331,11 +331,11 @@ namespace Kiss.Linq.Sql
                 bucket = item.FillBucket(bucket);
 
                 if (item.IsNewlyAdded)
-                    sql.Append(FluentBucket.As(bucket).Translate(FormatMethod.BatchAdd, DataContext.FormatProvider));
+                    sql.Append(Translate(bucket, FormatMethod.BatchAdd, DataContext.FormatProvider));
                 else if (item.IsDeleted)
-                    sql.Append(FluentBucket.As(bucket).Translate(FormatMethod.BatchRemove, DataContext.FormatProvider));
+                    sql.Append(Translate(bucket, FormatMethod.BatchRemove, DataContext.FormatProvider));
                 else if (item.IsAltered)
-                    sql.Append(FluentBucket.As(bucket).Translate(FormatMethod.BatchUpdate, DataContext.FormatProvider));
+                    sql.Append(Translate(bucket, FormatMethod.BatchUpdate, DataContext.FormatProvider));
             }
 
             if (sql.Length > 0)
@@ -344,6 +344,59 @@ namespace Kiss.Linq.Sql
 
                 Kiss.QueryObject.OnBatch(typeof(T));
             }
+        }
+
+        private static string Translate(IBucket bucket, FormatMethod method, IFormatProvider formatProvider)
+        {
+            formatProvider.Initialize(bucket);
+
+            string selectorString = GetFormatString(method, formatProvider);
+
+            StringBuilder builder = new StringBuilder(selectorString);
+
+            foreach (string format in StringUtil.GetAntExpressions(selectorString))
+            {
+                builder.Replace("${" + format + "}", formatProvider.DefineString(format));
+            }
+
+            return builder.ToString();
+        }
+
+        private static string GetFormatString(FormatMethod method, IFormatProvider formatProvider)
+        {
+            string selectorString = string.Empty;
+
+            switch (method)
+            {
+                case FormatMethod.Process:
+                    selectorString = formatProvider.ProcessFormat();
+                    break;
+                case FormatMethod.GetItem:
+                    selectorString = formatProvider.GetItemFormat();
+                    break;
+                case FormatMethod.AddItem:
+                    selectorString = formatProvider.AddItemFormat();
+                    break;
+                case FormatMethod.UpdateItem:
+                    selectorString = formatProvider.UpdateItemFormat();
+                    break;
+                case FormatMethod.RemoveItem:
+                    selectorString = formatProvider.RemoveItemFormat();
+                    break;
+                case FormatMethod.BatchAdd:
+                    selectorString = formatProvider.BatchAddItemFormat();
+                    break;
+                case FormatMethod.BatchUpdate:
+                    selectorString = formatProvider.BatchUpdateItemFormat();
+                    break;
+                case FormatMethod.BatchRemove:
+                    selectorString = formatProvider.BatchRemoveItemFormat();
+                    break;
+                default:
+                    break;
+            }
+
+            return selectorString;
         }
 
         #endregion

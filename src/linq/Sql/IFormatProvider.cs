@@ -1,5 +1,5 @@
 ﻿
-namespace Kiss.Linq
+namespace Kiss.Linq.Sql
 {
     /// <summary>
     /// Format provider interface generating literals.
