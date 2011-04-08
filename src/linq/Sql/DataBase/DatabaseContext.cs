@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.Data;
 using Kiss.Plugin;
+using Kiss.Repository;
 using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.DataBase

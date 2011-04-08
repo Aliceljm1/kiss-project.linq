@@ -11,6 +11,7 @@ using Kiss.Linq.Fluent;
 using Kiss.Linq.Sql.DataBase;
 using Kiss.Plugin;
 using Kiss.Query;
+using Kiss.Repository;
 using Kiss.Utils;
 
 namespace Kiss.Linq.Sql
@@ -444,7 +445,7 @@ namespace Kiss.Linq.Sql
                 if (_caches.ContainsKey(e.ModelType))
                     return _caches[e.ModelType];
 
-                PluginSetting setting = PluginSettings.Get<RepositoryInitializer>();
+                Kiss.Repository.RepositoryPluginSetting setting = PluginSettings.Get<RepositoryInitializer>() as Kiss.Repository.RepositoryPluginSetting;
 
                 if (setting == null)
                 {
@@ -452,14 +453,19 @@ namespace Kiss.Linq.Sql
                     return null;
                 }
 
-                XmlNode connsnode = setting.Node.SelectSingleNode("conns");
-                if (connsnode == null)
+                if (string.IsNullOrEmpty(setting.DefaultConn))
                 {
                     _caches[e.ModelType] = null;
                     return null;
                 }
 
-                ConnectionStringSettings connectionStringSettings = ConfigBase.GetConnectionStringSettings(XmlUtil.GetStringAttribute(connsnode, "default", string.Empty));
+                ConnectionStringSettings connectionStringSettings = ConfigBase.GetConnectionStringSettings(setting.DefaultConn);
+
+                if (connectionStringSettings == null)
+                {
+                    _caches[e.ModelType] = null;
+                    return null;
+                }
 
                 // save default connection string
                 if (ConfigBase.DefaultConnectionStringSettings == null)
@@ -467,26 +473,22 @@ namespace Kiss.Linq.Sql
 
                 string tablename = Kiss.QueryObject.GetTableName(e.ModelType);
 
-                foreach (XmlNode conn in connsnode.ChildNodes)
+                foreach (var conn in setting.Conns)
                 {
-                    string types = XmlUtil.GetStringAttribute(conn, "table", string.Empty);
-                    if (StringUtil.IsNullOrEmpty(types))
-                        continue;
-
                     bool match = false;
 
-                    foreach (string type in StringUtil.Split(types, ",", true, true))
+                    foreach (string table in StringUtil.Split(conn.Value, ",", true, true))
                     {
-                        if (type.StartsWith("*") && tablename.EndsWith(type.Substring(1), StringComparison.InvariantCultureIgnoreCase))
+                        if (table.StartsWith("*") && tablename.EndsWith(table.Substring(1), StringComparison.InvariantCultureIgnoreCase))
                             match = true;
 
-                        if (!match && type.EndsWith("*") && tablename.StartsWith(type.Substring(0, type.Length - 1), StringComparison.InvariantCultureIgnoreCase))
+                        if (!match && table.EndsWith("*") && tablename.StartsWith(table.Substring(0, table.Length - 1), StringComparison.InvariantCultureIgnoreCase))
                             match = true;
 
-                        if (!match && type.StartsWith("*") && type.EndsWith("*") && tablename.ToLower().Contains(type.Substring(1, type.Length - 1).ToLower()))
+                        if (!match && table.StartsWith("*") && table.EndsWith("*") && tablename.ToLower().Contains(table.Substring(1, table.Length - 1).ToLower()))
                             match = true;
 
-                        if (!match && string.Equals(type, tablename, StringComparison.InvariantCultureIgnoreCase))
+                        if (!match && string.Equals(table, tablename, StringComparison.InvariantCultureIgnoreCase))
                             match = true;
 
                         if (match)
@@ -495,7 +497,7 @@ namespace Kiss.Linq.Sql
 
                     if (match)
                     {
-                        connectionStringSettings = Config.ConfigBase.GetConnectionStringSettings(XmlUtil.GetStringAttribute(conn, "conn", string.Empty));
+                        connectionStringSettings = Config.ConfigBase.GetConnectionStringSettings(conn.Key);
                         break;
                     }
                 }
