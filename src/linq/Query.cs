@@ -428,7 +428,7 @@ namespace Kiss.Linq
                     if (item.IsNewlyAdded)
                     {
                         e.Action = SaveAction.Insert;
-                        Kiss.QueryObject.OnSaving(item.ReferringObject, e);
+                        Kiss.QueryObject<T>.OnSaving(item.ReferringObject, e);
                         if (e.Cancel)
                             continue;
 
@@ -439,7 +439,7 @@ namespace Kiss.Linq
                             item.IsNewlyAdded = false;
                             // cache the item to track for update.
                             (item as IVersionItem).Commit();
-                            Kiss.QueryObject.OnSaved(item.ReferringObject, SaveAction.Insert);
+                            Kiss.QueryObject<T>.OnSaved(item.ReferringObject, SaveAction.Insert);
                         }
                         else
                         {
@@ -456,7 +456,7 @@ namespace Kiss.Linq
                         if (PerformChange(bucket, item, this.RemoveItem))
                         {
                             tobeDeletedList.Add(item);
-                            Kiss.QueryObject.OnSaved(item.ReferringObject, SaveAction.Delete);
+                            Kiss.QueryObject<T>.OnSaved(item.ReferringObject, SaveAction.Delete);
                         }
                         else
                         {
@@ -472,6 +472,7 @@ namespace Kiss.Linq
                         if (PerformChange(bucket, item, this.UpdateItem))
                         {
                             (item as IVersionItem).Commit();
+                           
                             Kiss.QueryObject.OnSaved(item.ReferringObject, SaveAction.Update);
                         }
                         else
