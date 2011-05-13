@@ -167,14 +167,22 @@ namespace Kiss.Linq.Sql.DataBase
 
                 if (sqlserver2000[query.ConnectionString])
                 {
-                    sql = string.Format("if exists(select 1 from tempdb..sysobjects where xtype= 'u' and name like '#PageIndex%') drop table #PageIndex; CREATE TABLE #PageIndex (IndexId int IDENTITY (1, 1) NOT NULL,TID nvarchar(100) );INSERT INTO #PageIndex (TID) SELECT CAST({6} AS nvarchar(100)) FROM {1} {5} {2} SELECT {0} FROM {1}, #PageIndex PageIndex WHERE {1}.{6} = PageIndex.TID AND PageIndex.IndexID > {3} AND PageIndex.IndexID < {4} ORDER BY PageIndex.IndexID; if exists(select 1 from tempdb..sysobjects where xtype= 'u' and name like '#PageIndex%') drop table #PageIndex",
+                    string join = string.Empty;
+
+                    var index = where.IndexOf("where", StringComparison.InvariantCultureIgnoreCase);
+
+                    if (index != -1)
+                        join = where.Substring(0, index);
+
+                    sql = string.Format("if exists(select 1 from tempdb..sysobjects where type= 'u' and id = object_id(N'tempdb..#PageIndex')) drop table #PageIndex; CREATE TABLE #PageIndex (IndexId int IDENTITY (1, 1) NOT NULL,TID nvarchar(100) );INSERT INTO #PageIndex (TID) SELECT CAST({1}.{6} AS nvarchar(100)) FROM {1} {5} {2} SELECT {0} FROM {1} {7}, #PageIndex PageIndex WHERE {1}.{6} = PageIndex.TID AND PageIndex.IndexID > {3} AND PageIndex.IndexID < {4} ORDER BY PageIndex.IndexID; if exists(select 1 from tempdb..sysobjects where type= 'u' and name like '#PageIndex%') drop table #PageIndex",
                         query.TableField,
                         query.TableName,
                         orderby,
                         query.PageSize * query.PageIndex,
                         query.PageSize * (query.PageIndex + 1) + 1,
                         where,
-                        query["pk"]);
+                        string.IsNullOrEmpty(query["pk"]) ? "Id" : query["pk"],
+                        join);
                 }
                 else
                 {
