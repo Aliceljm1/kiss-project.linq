@@ -3,11 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Linq", "src\linq\Linq.csproj", "{A2171F32-6AB4-4BA4-920B-EB1D28F5F7F2}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{94E4EA16-6558-4990-B548-4AEE956EBFAC}"
-	ProjectSection(SolutionItems) = preProject
-		VERSION = VERSION
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "unitTest", "src\unittest\unitTest.csproj", "{33D2361A-7644-48F9-A820-903A6FC6E86C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApplication2", "src\ConsoleApplication2\ConsoleApplication2.csproj", "{E1949543-BCD3-4C7B-AF15-C476F8B13A53}"

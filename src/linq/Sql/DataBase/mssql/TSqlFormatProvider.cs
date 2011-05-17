@@ -116,7 +116,7 @@ namespace Kiss.Linq.Sql
             FluentBucket.As(bucket).For.EachItem
                 .Process(delegate(BucketItem item)
                 {
-                    if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoIncrement)
+                    if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
                         if (HasValue(item.Value))
                             list.Add(string.Format("[{0}]", item.Name));
                 });
@@ -131,7 +131,7 @@ namespace Kiss.Linq.Sql
             FluentBucket.As(bucket).For.EachItem
                .Process(delegate(BucketItem item)
                {
-                   if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoIncrement)
+                   if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
                        if (HasValue(item.Value))
                        {
                            if (builder.Length > 0)
@@ -215,7 +215,7 @@ namespace Kiss.Linq.Sql
             {
                 if (item.Unique)
                 {
-                    if ((item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoIncrement)
+                    if ((item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
                         value = "WHERE [" + item.Name + "] = @@IDENTITY";
                     else if (item.Value != null)
                         value = "WHERE [" + item.Name + "] = " + GetValue(item.Value);

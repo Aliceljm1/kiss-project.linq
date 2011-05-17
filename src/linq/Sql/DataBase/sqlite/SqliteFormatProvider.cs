@@ -42,7 +42,7 @@ namespace Kiss.Linq.Sql
                 {
                     if (item.Unique)
                     {
-                        if ((item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoIncrement)
+                        if ((item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
                             value = "WHERE [" + item.Name + "] = last_insert_rowid()";
                         else if (item.Value != null)
                             value = "WHERE [" + item.Name + "] = " + GetValue(item.Value);
