@@ -466,7 +466,7 @@ namespace Kiss.Linq.Sql.DataBase
             switch (type.FullName)
             {
                 case "System.String":
-                    return "nvarchar(max)";
+                    return "nvarchar(2000)";
                 case "System.DateTime":
                     return "datetime";
                 case "System.Int32":
@@ -476,7 +476,7 @@ namespace Kiss.Linq.Sql.DataBase
                 case "System.Int64":
                     return "bigint";
                 default:
-                    return "nvarchar(max)";
+                    return "nvarchar(2000)";
             }
         }
 
