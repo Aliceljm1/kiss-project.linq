@@ -94,7 +94,7 @@ namespace Kiss.Linq.Sql.DataBase
 
                 string sql = string.Format("select count({1}) as count from {0}",
                     q.TableName,
-                    q.TableField.IndexOfAny(new char[] { ',', '.' }) > -1 ? "*" : q.TableField);
+                    q.TableField.IndexOfAny(new char[] { ',' }) > -1 ? "*" : q.TableField);
 
                 if (StringUtil.HasText(where))
                     sql += string.Format(" {0}", where);
