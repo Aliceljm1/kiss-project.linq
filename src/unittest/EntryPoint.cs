@@ -198,10 +198,10 @@ namespace Kiss.Linq.Linq2Sql.Test
 
             Assert.AreEqual(0, query.Count());
 
-            Pair<string, string> p = new Pair<string, string>("Don Box", "Donx");
+            KeyValuePair<string, string> p = new KeyValuePair<string, string>("Don Box", "Donx");
 
             query = from book in bookContext
-                    where book.Author.Equals(p.First)
+                    where book.Author.Equals(p.Key)
                     select book;
 
             Assert.AreEqual(1, query.Count());
