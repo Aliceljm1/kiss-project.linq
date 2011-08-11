@@ -61,9 +61,25 @@ namespace Kiss.Linq.Sql.DataBase
             return command.ExecuteReader();
         }
 
-        public IFormatProvider FormatProvider
+        public IFormatProvider GetFormatProvider(string connstring)
         {
-            get { return new TSqlFormatProvider(); }
+            if (!sqlserver2000.ContainsKey(connstring))
+            {
+                lock (sqlserver2000)
+                {
+                    if (!sqlserver2000.ContainsKey(connstring))
+                        sqlserver2000.Add(connstring, SqlHelper.GetVersion(connstring) == SqlHelper.Version.SQLServer2000);
+                }
+            }
+
+            if (sqlserver2000[connstring])
+            {
+                return new TSql2000FormatProvider();
+            }
+            else
+            {
+                return new TSqlFormatProvider();
+            }
         }
 
         #region Iquery

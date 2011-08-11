@@ -65,7 +65,7 @@ namespace Kiss.Linq.Sql.DataBase
             return command.ExecuteReader();
         }
 
-        public IFormatProvider FormatProvider { get { return new SqliteFormatProvider(); } }
+        public IFormatProvider GetFormatProvider(string connstring) { return new SqliteFormatProvider(); }
 
         private static readonly ILogger logger = LogManager.GetLogger(typeof(SqliteDataProvider));
 

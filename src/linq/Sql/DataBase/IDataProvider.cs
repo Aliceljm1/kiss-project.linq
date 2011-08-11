@@ -41,6 +41,6 @@ namespace Kiss.Linq.Sql.DataBase
         /// <summary>
         /// sql format provider
         /// </summary>
-        IFormatProvider FormatProvider { get; }
+        IFormatProvider GetFormatProvider(string connStr);
     }
 }

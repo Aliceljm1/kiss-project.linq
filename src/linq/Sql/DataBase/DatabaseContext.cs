@@ -132,7 +132,7 @@ namespace Kiss.Linq.Sql.DataBase
         {
             get
             {
-                return dbAccess.FormatProvider;
+                return dbAccess.GetFormatProvider(connstring); ;
             }
         }
     }
