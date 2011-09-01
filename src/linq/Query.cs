@@ -427,6 +427,13 @@ namespace Kiss.Linq
                     SavingEventArgs e = new SavingEventArgs();
                     if (item.IsNewlyAdded)
                     {
+                        // 新增到上下文，但是没有提交，接着又删除
+                        if (item.IsDeleted)
+                        {
+                            tobeDeletedList.Add(item);
+                            continue;
+                        }
+
                         e.Action = SaveAction.Insert;
                         Kiss.QueryObject<T>.OnSaving(item.ReferringObject, e);
                         if (e.Cancel)
@@ -472,7 +479,7 @@ namespace Kiss.Linq
                         if (PerformChange(bucket, item, this.UpdateItem))
                         {
                             (item as IVersionItem).Commit();
-                           
+
                             Kiss.QueryObject.OnSaved(item.ReferringObject, SaveAction.Update);
                         }
                         else

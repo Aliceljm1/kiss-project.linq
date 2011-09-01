@@ -320,7 +320,7 @@ namespace Kiss.Linq.Sql
             else
                 value = Convert.ToString(obj);
 
-            value = value.Replace("'", "''");
+            value = value.Replace("'", "''").Trim();
 
             value = "'" + value + "'";
             return value;
