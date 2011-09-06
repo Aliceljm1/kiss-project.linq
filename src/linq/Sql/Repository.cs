@@ -71,11 +71,20 @@ namespace Kiss.Linq.Sql
             if (ids.Length == 0)
                 return new List<T>();
 
-            List<t> idlist = new List<t>(ids);
+            List<t> idlist = new List<t>();
 
-            List<T> list = (from obj in context
-                            where new List<t>(ids).Contains(obj.Id)
-                            select obj).ToList();
+            // trim duplicated ids
+            foreach (var item in ids)
+            {
+                if (idlist.Contains(item))
+                    continue;
+
+                idlist.Add(item);
+            }
+
+            List<T> list = (from q in context
+                            where idlist.Contains(q.Id)
+                            select q).ToList();
 
             list.Sort(delegate(T t1, T t2)
             {
