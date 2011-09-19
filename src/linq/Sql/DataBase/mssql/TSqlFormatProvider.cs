@@ -262,8 +262,16 @@ namespace Kiss.Linq.Sql
                         }
                         else if (item.RelationType != RelationType.NotApplicable)
                         {
-                            string value = GetValue(item.Value);
-                            container.AppendFormat("[{0}] {1} {2}", item.Name, RelationalOperators[item.RelationType].ToString(), value);
+                            if (item.Value == null)
+                            {
+                                container.AppendFormat("[{0}] {1} null", item.Name,
+                                    item.RelationType == RelationType.Equal ? "is" : "is not");
+                            }
+                            else
+                            {
+                                string value = GetValue(item.Value);
+                                container.AppendFormat("[{0}] {1} {2}", item.Name, RelationalOperators[item.RelationType].ToString(), value);
+                            }
                         }
                     })
                     .End(container => container.Append(")"))
