@@ -214,9 +214,9 @@ namespace Kiss.Linq
 
             if (info != null && info.CanWrite)
             {
-                info.SetValue(ReferringObject
-                    , Convert.ChangeType(value, info.PropertyType)
-                    , null);
+                info.SetValue(ReferringObject,
+                    value != null ? Convert.ChangeType(value, info.PropertyType) : null,
+                    null);
             }
         }
 
