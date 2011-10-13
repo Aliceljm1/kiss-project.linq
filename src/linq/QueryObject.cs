@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Kiss.Utils;
 
 namespace Kiss.Linq
 {
@@ -215,7 +216,7 @@ namespace Kiss.Linq
             if (info != null && info.CanWrite)
             {
                 info.SetValue(ReferringObject,
-                    value != null ? Convert.ChangeType(value, info.PropertyType) : null,
+                    TypeConvertUtil.ConvertTo(value, info.PropertyType),
                     null);
             }
         }

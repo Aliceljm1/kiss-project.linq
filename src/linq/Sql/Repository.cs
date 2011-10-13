@@ -99,20 +99,12 @@ namespace Kiss.Linq.Sql
             if (ids.Length == 0)
                 return;
 
-            ILinqContext<T> context = CreateContext(false);
-
-            foreach (t id in ids)
+            using (ILinqContext<T> cx = CreateContext(false))
             {
-                if (object.Equals(id, default(t)))
-                    continue;
+                cx.Remove(Gets(cx, ids));
 
-                T obj = new T() { Id = id };
-
-                context.Add(obj);
-                context.Remove(obj);
+                cx.SubmitChanges();
             }
-
-            context.SubmitChanges(true);
         }
 
         public List<T> Gets(string commaDelimitedIds)
