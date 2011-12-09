@@ -13,7 +13,7 @@ namespace Kiss.Linq.Sql.DataBase
     [DbProvider(ProviderName = "System.Data.SqlClient")]
     public class SqlDataProvider : IDataProvider, Kiss.Query.IQuery, IDDL
     {
-        public int ExecuteNonQuery(string connstring, CommandType cmdType, string sql)
+        public int ExecuteNonQuery(string connstring, string sql)
         {
             int ret = 0;
 
@@ -22,7 +22,7 @@ namespace Kiss.Linq.Sql.DataBase
                 conn.Open();
 
                 DbCommand command = new SqlCommand(sql, (SqlConnection)conn);
-                command.CommandType = cmdType;
+                command.CommandType = CommandType.Text;
 
                 ret = command.ExecuteNonQuery();
 
@@ -32,30 +32,63 @@ namespace Kiss.Linq.Sql.DataBase
             return ret;
         }
 
-        public int ExecuteNonQuery(IDbTransaction tran, CommandType cmdType, string sql)
+        public int ExecuteNonQuery(IDbTransaction tran, string sql)
         {
             IDbCommand command = new SqlCommand(sql, (SqlConnection)tran.Connection);
-            command.CommandType = cmdType;
+            command.CommandType = CommandType.Text;
             command.Transaction = tran;
 
             return command.ExecuteNonQuery();
         }
 
-        public IDataReader ExecuteReader(string connstring, CommandType cmdType, string sql)
+        public int ExecuteScalar(string connstring, string sql)
+        {
+            object ret;
+
+            using (DbConnection conn = new SqlConnection(connstring))
+            {
+                conn.Open();
+
+                DbCommand command = new SqlCommand(sql, (SqlConnection)conn);
+                command.CommandType = CommandType.Text;
+
+                ret = command.ExecuteScalar();
+
+                conn.Close();
+            }
+
+            if (ret == null || ret is DBNull) return 0;
+
+            return Convert.ToInt32(ret);
+        }
+
+        public int ExecuteScalar(IDbTransaction tran, string sql)
+        {
+            IDbCommand command = new SqlCommand(sql, (SqlConnection)tran.Connection);
+            command.CommandType = CommandType.Text;
+            command.Transaction = tran;
+
+            object v = command.ExecuteScalar();
+            if (v == null || v is DBNull) return 0;
+
+            return Convert.ToInt32(v);
+        }
+
+        public IDataReader ExecuteReader(string connstring, string sql)
         {
             DbConnection conn = new SqlConnection(connstring);
             conn.Open();
 
             DbCommand command = new SqlCommand(sql, (SqlConnection)conn);
-            command.CommandType = cmdType;
+            command.CommandType = CommandType.Text;
 
             return command.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
-        public IDataReader ExecuteReader(IDbTransaction tran, CommandType cmdType, string sql)
+        public IDataReader ExecuteReader(IDbTransaction tran, string sql)
         {
             IDbCommand command = new SqlCommand(sql, (SqlConnection)tran.Connection);
-            command.CommandType = cmdType;
+            command.CommandType = CommandType.Text;
             command.Transaction = tran;
 
             return command.ExecuteReader();
@@ -122,16 +155,9 @@ namespace Kiss.Linq.Sql.DataBase
             if (StringUtil.HasText(where))
                 sql += string.Format(" {0}", where);
 
-            logger.Debug(sql);
+            logger.Debug(sql);           
 
-            object obj = SqlHelper.ExecuteScalar(query.ConnectionString,
-                    CommandType.Text,
-                    sql);
-
-            if (obj == null || obj is DBNull)
-                return 0;
-
-            return Convert.ToInt32(obj);
+            return ExecuteScalar(query.ConnectionString, sql);
         }
 
         /// <summary>
@@ -146,7 +172,6 @@ namespace Kiss.Linq.Sql.DataBase
             logger.Debug(sql);
 
             return ExecuteReader(query.ConnectionString,
-                    CommandType.Text,
                     sql);
         }
 
@@ -267,7 +292,7 @@ namespace Kiss.Linq.Sql.DataBase
 
             logger.Debug(sql);
 
-            ExecuteNonQuery(query.ConnectionString, CommandType.Text, sql);
+            ExecuteNonQuery(query.ConnectionString, sql);
         }
 
         #endregion

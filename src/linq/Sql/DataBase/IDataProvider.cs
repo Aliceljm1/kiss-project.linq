@@ -10,33 +10,45 @@ namespace Kiss.Linq.Sql.DataBase
         /// <summary>
         /// ExecuteNonQuery
         /// </summary>
-        /// <param name="cmdType"></param>
         /// <param name="sql"></param>
         /// <returns></returns>
-        int ExecuteNonQuery(string connstring, CommandType cmdType, string sql);
+        int ExecuteNonQuery(string connstring, string sql);
+
+        /// <summary>
+        /// ExecuteScalar
+        /// </summary>
+        /// <param name="tran"></param>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        int ExecuteScalar(IDbTransaction tran, string sql);
+
+        /// <summary>
+        /// ExecuteScalar
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <returns></returns>
+        int ExecuteScalar(string connstring, string sql);
 
         /// <summary>
         /// ExecuteNonQuery
         /// </summary>
         /// <param name="tran"></param>
-        /// <param name="cmdType"></param>
         /// <param name="sql"></param>
         /// <returns></returns>
-        int ExecuteNonQuery(IDbTransaction tran, CommandType cmdType, string sql);
+        int ExecuteNonQuery(IDbTransaction tran, string sql);
 
         /// <summary>
         /// ExecuteReader
         /// </summary>
-        IDataReader ExecuteReader(string connstring, CommandType cmdType, string sql);
+        IDataReader ExecuteReader(string connstring, string sql);
 
         /// <summary>
         /// ExecuteReader
         /// </summary>
         /// <param name="tran"></param>
-        /// <param name="cmdType"></param>
         /// <param name="sql"></param>
         /// <returns></returns>
-        IDataReader ExecuteReader(IDbTransaction tran, CommandType cmdType, string sql);
+        IDataReader ExecuteReader(IDbTransaction tran, string sql);
 
         /// <summary>
         /// sql format provider

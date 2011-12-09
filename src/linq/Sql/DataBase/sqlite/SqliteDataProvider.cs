@@ -13,7 +13,7 @@ namespace Kiss.Linq.Sql.DataBase
     [DbProvider(ProviderName = "System.Data.SQLite")]
     public class SqliteDataProvider : IDataProvider, Kiss.Query.IQuery, IDDL
     {
-        public int ExecuteNonQuery(string connstring, CommandType cmdType, string sql)
+        public int ExecuteNonQuery(string connstring, string sql)
         {
             int ret = 0;
 
@@ -22,7 +22,7 @@ namespace Kiss.Linq.Sql.DataBase
                 conn.Open();
 
                 DbCommand command = conn.CreateCommand();
-                command.CommandType = cmdType;
+                command.CommandType = CommandType.Text;
                 command.CommandText = sql;
 
                 ret = command.ExecuteNonQuery();
@@ -33,32 +33,67 @@ namespace Kiss.Linq.Sql.DataBase
             return ret;
         }
 
-        public int ExecuteNonQuery(IDbTransaction tran, CommandType cmdType, string sql)
+        public int ExecuteNonQuery(IDbTransaction tran, string sql)
         {
             IDbCommand command = tran.Connection.CreateCommand();
-            command.CommandType = cmdType;
+            command.CommandType = CommandType.Text;
             command.CommandText = sql;
             command.Transaction = tran;
 
             return command.ExecuteNonQuery();
         }
 
-        public IDataReader ExecuteReader(string connstring, CommandType cmdType, string sql)
+        public int ExecuteScalar(string connstring, string sql)
+        {
+            object ret = 0;
+
+            using (DbConnection conn = new SQLiteConnection(connstring))
+            {
+                conn.Open();
+
+                DbCommand command = conn.CreateCommand();
+                command.CommandType = CommandType.Text;
+                command.CommandText = sql;
+
+                ret = command.ExecuteScalar();
+
+                conn.Close();
+            }
+
+            if (ret == null || ret is DBNull) return 0;
+
+            return Convert.ToInt32(ret);
+        }
+
+        public int ExecuteScalar(IDbTransaction tran, string sql)
+        {
+            IDbCommand command = tran.Connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = sql;
+            command.Transaction = tran;
+
+            object v = command.ExecuteScalar();
+            if (v == null || v is DBNull) return 0;
+
+            return Convert.ToInt32(v);
+        }
+
+        public IDataReader ExecuteReader(string connstring, string sql)
         {
             DbConnection conn = new SQLiteConnection(connstring);
             conn.Open();
 
             DbCommand command = conn.CreateCommand();
-            command.CommandType = cmdType;
+            command.CommandType = CommandType.Text;
             command.CommandText = sql;
 
             return command.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
-        public IDataReader ExecuteReader(IDbTransaction tran, CommandType cmdType, string sql)
+        public IDataReader ExecuteReader(IDbTransaction tran, string sql)
         {
             IDbCommand command = tran.Connection.CreateCommand();
-            command.CommandType = cmdType;
+            command.CommandType = CommandType.Text;
             command.CommandText = sql;
             command.Transaction = tran;
 
@@ -88,29 +123,16 @@ namespace Kiss.Linq.Sql.DataBase
         {
             string where = q.WhereClause;
 
-            using (DbConnection conn = new SQLiteConnection(q.ConnectionString))
-            {
-                conn.Open();
+            string sql = string.Format("select count({1}) as count from {0}",
+                q.TableName,
+                q.TableField.IndexOfAny(new char[] { ',' }) > -1 || q.TableField.Contains(".*") ? "*" : q.TableField);
 
-                string sql = string.Format("select count({1}) as count from {0}",
-                    q.TableName,
-                    q.TableField.IndexOfAny(new char[] { ',' }) > -1 || q.TableField.Contains(".*") ? "*" : q.TableField);
+            if (StringUtil.HasText(where))
+                sql += string.Format(" {0}", where);
 
-                if (StringUtil.HasText(where))
-                    sql += string.Format(" {0}", where);
+            logger.Debug(sql);
 
-                DbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = sql;
-
-                logger.Debug(sql);
-
-                object obj = cmd.ExecuteScalar();
-
-                if (obj == null || obj is DBNull)
-                    return 0;
-
-                return Convert.ToInt32(obj);
-            }
+            return ExecuteScalar(q.ConnectionString, sql);
         }
 
         public IDataReader GetReader(QueryCondition condition)
@@ -119,7 +141,7 @@ namespace Kiss.Linq.Sql.DataBase
 
             logger.Debug(sql);
 
-            return ExecuteReader(condition.ConnectionString, CommandType.Text, sql);
+            return ExecuteReader(condition.ConnectionString, sql);
         }
 
         public IDbTransaction BeginTransaction(string connectionstring)
@@ -185,7 +207,7 @@ namespace Kiss.Linq.Sql.DataBase
 
             logger.Debug(sql);
 
-            ExecuteNonQuery(condition.ConnectionString, CommandType.Text, sql);
+            ExecuteNonQuery(condition.ConnectionString, sql);
         }
 
         #region IDDL Members
@@ -226,7 +248,7 @@ namespace Kiss.Linq.Sql.DataBase
 
         public void Execute(Database db, string sql)
         {
-            ExecuteNonQuery(db.Connectionstring, CommandType.Text, sql);
+            ExecuteNonQuery(db.Connectionstring, sql);
         }
 
         public string GenAddTableSql(IBucket bucket)

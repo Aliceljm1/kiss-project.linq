@@ -76,25 +76,25 @@ namespace Kiss.Linq.Sql.DataBase
             return false;
         }
 
-        public int ExecuteNonQuery(IDbTransaction tran, CommandType cmdType, string sql)
+        public int ExecuteNonQuery(IDbTransaction tran, string sql)
         {
             if (tran == null)
-                return ExecuteNonQuery(cmdType, sql);
+                return ExecuteNonQuery(sql);
 
             if (logger != null)
                 logger.Debug(sql);
 
-            return dbAccess.ExecuteNonQuery(tran, cmdType, sql);
+            return dbAccess.ExecuteNonQuery(tran, sql);
         }
 
-        public int ExecuteNonQuery(CommandType cmdType, string sql)
+        public int ExecuteNonQuery(string sql)
         {
             if (logger != null)
                 logger.Debug(sql);
 
             try
             {
-                return dbAccess.ExecuteNonQuery(connstring, cmdType, sql);
+                return dbAccess.ExecuteNonQuery(connstring, sql);
             }
             catch (Exception ex)
             {
@@ -102,25 +102,51 @@ namespace Kiss.Linq.Sql.DataBase
             }
         }
 
-        public IDataReader ExecuteReader(IDbTransaction tran, CommandType cmdType, string sql)
+        public int ExecuteScalar(IDbTransaction tran, string sql)
         {
             if (tran == null)
-                return ExecuteReader(cmdType, sql);
+                return ExecuteScalar(sql);
 
             if (logger != null)
                 logger.Debug(sql);
 
-            return dbAccess.ExecuteReader(tran, cmdType, sql);
+            return dbAccess.ExecuteScalar(tran, sql);
         }
 
-        public IDataReader ExecuteReader(CommandType cmdType, string sql)
+        public int ExecuteScalar(string sql)
         {
             if (logger != null)
                 logger.Debug(sql);
 
             try
             {
-                return dbAccess.ExecuteReader(connstring, cmdType, sql);
+                return dbAccess.ExecuteScalar(connstring, sql);
+            }
+            catch (Exception ex)
+            {
+                throw new LinqException(sql, ex);
+            }
+        }
+
+        public IDataReader ExecuteReader(IDbTransaction tran, string sql)
+        {
+            if (tran == null)
+                return ExecuteReader(sql);
+
+            if (logger != null)
+                logger.Debug(sql);
+
+            return dbAccess.ExecuteReader(tran, sql);
+        }
+
+        public IDataReader ExecuteReader(string sql)
+        {
+            if (logger != null)
+                logger.Debug(sql);
+
+            try
+            {
+                return dbAccess.ExecuteReader(connstring, sql);
             }
             catch (Exception ex)
             {
@@ -132,7 +158,7 @@ namespace Kiss.Linq.Sql.DataBase
         {
             get
             {
-                return dbAccess.GetFormatProvider(connstring); ;
+                return dbAccess.GetFormatProvider(connstring);
             }
         }
     }

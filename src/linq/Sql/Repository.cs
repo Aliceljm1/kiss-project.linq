@@ -5,7 +5,6 @@ using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Reflection;
-using System.Xml;
 using Kiss.Config;
 using Kiss.Linq.Fluent;
 using Kiss.Linq.Sql.DataBase;
@@ -414,6 +413,11 @@ namespace Kiss.Linq.Sql
         }
 
         #endregion
+
+        public IWhere Where(string where, params object[] args)
+        {
+            return new WhereClause<T>(ConnectionStringSettings).Where(where, args);
+        }
     }
 
     public class Repository

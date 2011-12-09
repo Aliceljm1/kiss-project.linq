@@ -204,12 +204,12 @@ namespace Kiss.Linq.Sql
 
         private int ExecuteOnly(string sql)
         {
-            return DataContext.ExecuteNonQuery(Transaction, CommandType.Text, sql);
+            return DataContext.ExecuteNonQuery(Transaction, sql);
         }
 
         private bool ExecuteReaderAndFillBucket(IBucket bucket, string sql)
         {
-            using (IDataReader rdr = DataContext.ExecuteReader(Transaction, CommandType.Text, sql))
+            using (IDataReader rdr = DataContext.ExecuteReader(Transaction, sql))
             {
                 if (rdr.RecordsAffected == 0)
                     return false;
@@ -234,7 +234,7 @@ namespace Kiss.Linq.Sql
         {
             IDictionary<string, BucketItem> bItems = item.Items;
 
-            using (IDataReader rdr = DataContext.ExecuteReader(CommandType.Text, sql))
+            using (IDataReader rdr = DataContext.ExecuteReader(sql))
             {
                 T obj = default(T);
 
@@ -286,7 +286,7 @@ namespace Kiss.Linq.Sql
 
         private void FillObject(IBucket bucket, string sql, IModify<T> items, IDictionary<string, BucketItem> bItems)
         {
-            using (IDataReader rdr = DataContext.ExecuteReader(CommandType.Text, sql))
+            using (IDataReader rdr = DataContext.ExecuteReader(sql))
             {
                 while (rdr.Read())
                 {
