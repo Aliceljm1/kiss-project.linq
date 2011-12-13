@@ -56,12 +56,25 @@ namespace Kiss.Linq.Sql
 
         #endregion
 
+        public override void SubmitChanges()
+        {
+            SubmitChanges(false);
+        }
+
         public void SubmitChanges(bool batch)
         {
+            Validation.ValidationManager vm = new Validation.ValidationManager<T>();
+
+            var queryColleciton = (QueryCollection<T>)this.collection;
+
+            foreach (var item in queryColleciton.Objects)
+            {
+                if (!item.IsDeleted && !vm.IsValid(item.ReferringObject))
+                    throw new Validation.ValidationException(vm.GetValidationErrorContent());
+            }
+
             if (batch)
             {
-                var queryColleciton = (QueryCollection<T>)this.collection;
-
                 if (queryColleciton.Objects.Count == 0)
                     return;
 
