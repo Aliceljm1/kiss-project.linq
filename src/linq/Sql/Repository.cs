@@ -211,7 +211,7 @@ namespace Kiss.Linq.Sql
 
             new DatabaseContext(ConnectionStringSettings, typeof(T));
 
-            q.FireBeforeQueryEvent("Gets");
+            q.FireBeforeQueryEvent("Gets", ConnectionStringSettings.ProviderName);
 
             if (string.IsNullOrEmpty(q.TableField))
                 q.TableField = "*";
@@ -237,6 +237,10 @@ namespace Kiss.Linq.Sql
             {
                 BucketImpl bucket = new BucketImpl<T>().Describe();
 
+                DataTable schemaTable = rdr.GetSchemaTable();
+                // set column:"ColumnName" to primaryKey
+                schemaTable.PrimaryKey = new DataColumn[] { schemaTable.Columns[0] };
+
                 while (rdr.Read())
                 {
                     var item = new T();
@@ -244,7 +248,8 @@ namespace Kiss.Linq.Sql
 
                     FluentBucket.As(bucket).For.EachItem.Process(delegate(BucketItem bucketItem)
                     {
-                        fillObject(rdr, item, t, bucketItem);
+                        if (schemaTable.Rows.Contains(bucketItem.Name))
+                            fillObject(rdr, item, t, bucketItem);
                     });
 
                     list.Add(item);
@@ -267,7 +272,7 @@ namespace Kiss.Linq.Sql
 
             new DatabaseContext(ConnectionStringSettings, typeof(T));
 
-            q.FireBeforeQueryEvent("GetDataTable");
+            q.FireBeforeQueryEvent("GetDataTable", ConnectionStringSettings.ProviderName);
 
             if (string.IsNullOrEmpty(q.TableField))
                 q.TableField = "*";
@@ -310,7 +315,7 @@ namespace Kiss.Linq.Sql
 
             new DatabaseContext(ConnectionStringSettings, typeof(T));
 
-            q.FireBeforeQueryEvent("Count");
+            q.FireBeforeQueryEvent("Count", ConnectionStringSettings.ProviderName);
 
             string sql = "count" + q.WhereClause;
 
@@ -340,7 +345,7 @@ namespace Kiss.Linq.Sql
         {
             CheckQuery(q);
 
-            q.FireBeforeQueryEvent("Delete");
+            q.FireBeforeQueryEvent("Delete", ConnectionStringSettings.ProviderName);
 
             q.Delete();
 
