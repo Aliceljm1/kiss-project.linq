@@ -11,7 +11,7 @@ namespace Kiss.Linq.Sql.DataBase
         sqlite
     }
 
-    internal class ScriptProcessor
+    public class ScriptProcessor
     {
         public static string Combine(params string[] sqls)
         {
@@ -36,17 +36,17 @@ namespace Kiss.Linq.Sql.DataBase
             return builder.ToString();
         }
 
-        internal static string CreateTableScript(DbMode mode, params string[] args)
+        public static string CreateTableScript(DbMode mode, params string[] args)
         {
             return GenerateScript(CommandName.CreateTable, mode.ToString(), args);
         }
 
-        internal static string CreatePrimaryScript(DbMode mode, params string[] args)
+        public static string CreatePrimaryScript(DbMode mode, params string[] args)
         {
             return GenerateScript(CommandName.CreatePrimary, mode.ToString(), args);
         }
 
-        private static string GetScript(string resource)
+        public static string GetScript(string resource)
         {
             using (Stream resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
             {
@@ -55,7 +55,7 @@ namespace Kiss.Linq.Sql.DataBase
             }
         }
 
-        internal class ActionKey
+        public class ActionKey
         {
             public static string FIELD = "#FIELD#";
             public static string VALUE = "#VALUE#";
@@ -68,11 +68,11 @@ namespace Kiss.Linq.Sql.DataBase
 
         }
 
-        internal class CommandName
+        public class CommandName
         {
             public const string CreateTable = "CreateTable";
             public const string CreatePrimary = "PkConstant";
-        }        
+        }
 
         private static IDictionary<string, string> _sqlMap = new Dictionary<string, string>();
     }

@@ -70,10 +70,6 @@
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Data.SQLite, Version=1.0.65.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\System.Data.SQLite.DLL</HintPath>
-    </Reference>
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -108,9 +104,7 @@
     <Compile Include="Sql\DataBase\IDDL.cs" />
     <Compile Include="Sql\DataBase\ScriptProcessor.cs" />
     <Compile Include="Sql\DataBase\mssql\SqlDataProvider.cs" />
-    <Compile Include="Sql\DataBase\sqlite\SqliteDataProvider.cs" />
     <Compile Include="Sql\Repository.cs" />
-    <Compile Include="Sql\DataBase\sqlite\SqliteFormatProvider.cs" />
     <Compile Include="Sql\SqlQuery.cs" />
     <Compile Include="Sql\DataBase\mssql\TSqlFormatProvider.cs" />
     <Compile Include="TreeNode.cs" />
@@ -133,7 +127,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Sql\DataBase\sqlite\CreateTable.sql" />
     <EmbeddedResource Include="Sql\DataBase\mssql\CreateTable.sql" />
     <EmbeddedResource Include="Sql\DataBase\mssql\PkConstant.sql" />
   </ItemGroup>
