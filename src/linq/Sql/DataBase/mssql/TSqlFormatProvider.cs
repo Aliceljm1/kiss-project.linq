@@ -13,6 +13,19 @@ namespace Kiss.Linq.Sql
 
         protected IBucket bucket;
 
+        protected virtual char OpenQuote { get { return '['; } }
+        protected virtual char CloseQuote { get { return ']'; } }
+        
+        public string Quote(string entity)
+        {
+            if (entity[0] == OpenQuote)
+                return entity;
+
+            return string.Concat(OpenQuote, entity, CloseQuote);
+        }
+
+        protected virtual string IdentitySelectString { get { return "@@IDENTITY"; } }
+
         #region Implementation of IFormatProvider
 
         /// <summary>
@@ -36,7 +49,7 @@ namespace Kiss.Linq.Sql
                 builder.AppendFormat("SELECT {0} , Row_number()", fields);
 
                 builder.Append(" OVER(${OrderBy}) ");
-                builder.Append(" as [RowNumber] FROM [${Entity}] ");
+                builder.Append(" as [RowNumber] FROM ${Entity} ");
                 builder.Append("${Where}");
                 builder.Append(")");
                 builder.Append("Select * from FilteredList WHERE [Rownumber] Between (${Skip}) and (${PageLength})");
@@ -44,7 +57,7 @@ namespace Kiss.Linq.Sql
                 return builder.ToString();
             }
 
-            return "Select * from [${Entity}] ${Where} ${OrderBy}";
+            return "Select * from ${Entity} ${Where} ${OrderBy}";
         }
 
         public string GetItemFormat()
@@ -54,42 +67,42 @@ namespace Kiss.Linq.Sql
 
         public virtual string AddItemFormat()
         {
-            return @"INSERT INTO [${Entity}] ( ${TobeInsertedFields}) VALUES (${TobeInsertedValues}); SELECT * FROM [${Entity}] ${AfterInsertWhere}";
+            return @"INSERT INTO ${Entity} ( ${TobeInsertedFields} ) VALUES (${TobeInsertedValues}); SELECT * FROM ${Entity} ${AfterInsertWhere}";
         }
 
         public virtual string BatchAddItemFormat()
         {
-            return @"INSERT INTO [${Entity}] ( ${TobeInsertedFields}) VALUES (${TobeInsertedValues});";
+            return @"INSERT INTO ${Entity} ( ${TobeInsertedFields} ) VALUES (${TobeInsertedValues});";
         }
 
         public string UpdateItemFormat()
         {
-            return @"Update [${Entity}] SET ${UpdateItems} WHERE ${UniqueWhere}; SELECT * FROM [${Entity}] Where ${UniqueWhere}";
+            return @"Update ${Entity} SET ${UpdateItems} WHERE ${UniqueWhere}; SELECT * FROM ${Entity} Where ${UniqueWhere}";
         }
 
         public string BatchUpdateItemFormat()
         {
-            return @"Update [${Entity}] SET ${UpdateItems} WHERE ${UniqueWhere};";
+            return @"Update ${Entity} SET ${UpdateItems} WHERE ${UniqueWhere};";
         }
 
         public string RemoveItemFormat()
         {
-            return @"DELETE FROM [${Entity}] WHERE ${UniqueWhere};";
+            return @"DELETE FROM ${Entity} WHERE ${UniqueWhere};";
         }
 
         public string BatchRemoveItemFormat()
         {
-            return @"DELETE FROM [${Entity}] WHERE ${UniqueWhere};";
+            return @"DELETE FROM ${Entity} WHERE ${UniqueWhere};";
         }
 
         public string DefineEntity()
         {
-            return FluentBucket.As(bucket).Entity.Name;
+            return Quote(bucket.Name);
         }
 
         public string DefineFields()
         {
-            string[] names = bucket.Items.Select(item => string.Format("[{0}]", item.Value.Name)).ToArray();
+            string[] names = bucket.Items.Select(item => { return Quote(item.Value.Name); }).ToArray();
             return string.Join(",", names);
         }
 
@@ -100,10 +113,10 @@ namespace Kiss.Linq.Sql
             FluentBucket.As(bucket).For.EachItem
                 .Match(delegate(BucketItem item)
                 {
-                    return item.Unique == false;
+                    return !item.Unique;
                 }).Process(delegate(BucketItem item)
                 {
-                    list.Add(item.Name);
+                    list.Add(Quote(item.Name));
                 });
 
             return string.Join(",", list.ToArray());
@@ -118,7 +131,7 @@ namespace Kiss.Linq.Sql
                 {
                     if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
                         if (HasValue(item.Value))
-                            list.Add(string.Format("[{0}]", item.Name));
+                            list.Add(Quote(item.Name));
                 });
 
             return string.Join(",", list.ToArray());
@@ -163,11 +176,11 @@ namespace Kiss.Linq.Sql
                                  if (item.Value != null)
                                  {
                                      string value = GetValue(item.Value);
-                                     builder.AppendFormat("[{0}]{1}{2}", item.Name, RelationalOperators[item.RelationType], value);
+                                     builder.AppendFormat("{0}{1}{2}", Quote(item.Name), RelationalOperators[item.RelationType], value);
                                  }
                                  else
                                  {
-                                     builder.AppendFormat("[{0}]{1}null", item.Name, RelationalOperators[item.RelationType]);
+                                     builder.AppendFormat("{0}{1}null", Quote(item.Name), RelationalOperators[item.RelationType]);
                                  }
                              }
                          });
@@ -210,17 +223,14 @@ namespace Kiss.Linq.Sql
         {
             string value = string.Empty;
 
-            FluentBucket.As(bucket).For.EachItem
-                .Process(delegate(BucketItem item)
-            {
-                if (item.Unique)
-                {
-                    if ((item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
-                        value = "WHERE [" + item.Name + "] = @@IDENTITY";
-                    else if (item.Value != null)
-                        value = "WHERE [" + item.Name + "] = " + GetValue(item.Value);
-                }
-            });
+            FluentBucket.As(bucket).For.EachItem.Match((m) => { return m.Unique; })
+               .Process(delegate(BucketItem item)
+           {
+               if ((item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
+                   value = "WHERE " + Quote(item.Name) + " = " + IdentitySelectString;
+               else if (item.Value != null)
+                   value = "WHERE " + Quote(item.Name) + " = " + GetValue(item.Value);
+           });
 
             return value;
         }
@@ -258,19 +268,19 @@ namespace Kiss.Linq.Sql
                                 items.Add(GetValue(list.Value));
                             }
 
-                            container.AppendFormat("[{0}] IN({1})", item.Name, string.Join(",", items.ToArray()));
+                            container.AppendFormat("{0} IN({1})", Quote(item.Name), string.Join(",", items.ToArray()));
                         }
                         else if (item.RelationType != RelationType.NotApplicable)
                         {
                             if (item.Value == null)
                             {
-                                container.AppendFormat("[{0}] {1} null", item.Name,
+                                container.AppendFormat("{0} {1} null", Quote(item.Name),
                                     item.RelationType == RelationType.Equal ? "is" : "is not");
                             }
                             else
                             {
                                 string value = GetValue(item.Value);
-                                container.AppendFormat("[{0}] {1} {2}", item.Name, RelationalOperators[item.RelationType].ToString(), value);
+                                container.AppendFormat("{0} {1} {2}", Quote(item.Name), RelationalOperators[item.RelationType].ToString(), value);
                             }
                         }
                     })
@@ -289,7 +299,7 @@ namespace Kiss.Linq.Sql
                 .Entity.OrderBy.IfUsed(() => builder.Append("ORDER BY "))
                 .ForEach.Process(delegate(string field, bool ascending)
             {
-                builder.Append("[" + field + "] " + (ascending ? "asc" : "desc"));
+                builder.Append(Quote(field) + (ascending ? "asc" : "desc"));
                 builder.Append(",");
             });
 

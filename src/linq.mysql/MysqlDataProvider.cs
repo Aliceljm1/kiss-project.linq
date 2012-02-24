@@ -2,23 +2,23 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SQLite;
 using System.Text;
 using Kiss.Linq.Fluent;
 using Kiss.Linq.Sql.DataBase;
 using Kiss.Query;
 using Kiss.Utils;
+using MySql.Data.MySqlClient;
 
-namespace Kiss.Linq.Sql.Sqlite
+namespace Kiss.Linq.Sql.Mysql
 {
-    [DbProvider(ProviderName = "System.Data.Sqlite")]
-    public class SqliteDataProvider : IDataProvider, Kiss.Query.IQuery, IDDL
+    [DbProvider(ProviderName = "System.Data.Mysql")]
+    public class MysqlDataProvider : IDataProvider, Kiss.Query.IQuery, IDDL
     {
         public int ExecuteNonQuery(string connstring, string sql)
         {
             int ret = 0;
 
-            using (DbConnection conn = new SQLiteConnection(connstring))
+            using (DbConnection conn = new MySqlConnection(connstring))
             {
                 conn.Open();
 
@@ -48,7 +48,7 @@ namespace Kiss.Linq.Sql.Sqlite
         {
             object ret = 0;
 
-            using (DbConnection conn = new SQLiteConnection(connstring))
+            using (DbConnection conn = new MySqlConnection(connstring))
             {
                 conn.Open();
 
@@ -81,7 +81,7 @@ namespace Kiss.Linq.Sql.Sqlite
 
         public IDataReader ExecuteReader(string connstring, string sql)
         {
-            DbConnection conn = new SQLiteConnection(connstring);
+            DbConnection conn = new MySqlConnection(connstring);
             conn.Open();
 
             DbCommand command = conn.CreateCommand();
@@ -101,9 +101,9 @@ namespace Kiss.Linq.Sql.Sqlite
             return command.ExecuteReader();
         }
 
-        public IFormatProvider GetFormatProvider(string connstring) { return new SqliteFormatProvider(); }
+        public IFormatProvider GetFormatProvider(string connstring) { return new MysqlFormatProvider(); }
 
-        private static readonly ILogger logger = LogManager.GetLogger(typeof(SqliteDataProvider));
+        private static readonly ILogger logger = LogManager.GetLogger(typeof(MysqlDataProvider));
 
         public List<T> GetRelationIds<T>(QueryCondition condition)
         {
@@ -124,7 +124,7 @@ namespace Kiss.Linq.Sql.Sqlite
         {
             string where = q.WhereClause;
 
-            string sql = string.Format("select count({1}) as count from {0}",
+            string sql = string.Format("select count({1}) as count from `{0}`",
                 q.TableName,
                 q.TableField.IndexOfAny(new char[] { ',' }) > -1 || q.TableField.Contains(".*") ? "*" : q.TableField);
 
@@ -147,7 +147,7 @@ namespace Kiss.Linq.Sql.Sqlite
 
         public IDbTransaction BeginTransaction(string connectionstring)
         {
-            SQLiteConnection connection = new SQLiteConnection(connectionstring);
+            MySqlConnection connection = new MySqlConnection(connectionstring);
             connection.Open();
 
             return connection.BeginTransaction();
@@ -182,15 +182,15 @@ namespace Kiss.Linq.Sql.Sqlite
 
             DataTable dt = new DataTable();
 
-            using (SQLiteConnection conn = new SQLiteConnection(q.ConnectionString))
+            using (MySqlConnection conn = new MySqlConnection(q.ConnectionString))
             {
                 conn.Open();
 
-                SQLiteCommand cmd = conn.CreateCommand();
+                MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandText = sql;
 
-                SQLiteDataAdapter da = new SQLiteDataAdapter(cmd);
+                MySqlDataAdapter da = new MySqlDataAdapter(cmd);
                 da.Fill(dt);
             }
 
@@ -219,7 +219,7 @@ namespace Kiss.Linq.Sql.Sqlite
 
         public void Fill(Database db)
         {
-            using (SQLiteConnection conn = new SQLiteConnection(db.Connectionstring))
+            using (MySqlConnection conn = new MySqlConnection(db.Connectionstring))
             {
                 conn.Open();
 
@@ -258,35 +258,31 @@ namespace Kiss.Linq.Sql.Sqlite
 
             FluentBucket fluentBucket = FluentBucket.As(bucket);
 
+            fluentBucket.For.EachItem.Process(delegate(BucketItem bucketItem)
+            {
+                createBuilder.Append(GenerateDeclaration(bucketItem));
+                createBuilder.Append(",\n");
+            });
+
             fluentBucket.For.EachItem.Match(delegate(BucketItem bucketItem)
             {
                 return bucketItem.Unique;
             }).Process(delegate(BucketItem bucketItem)
             {
-                createBuilder.Append(GenerateDeclaration(bucketItem));
-                createBuilder.Append(",\n");
-            });
-
-            fluentBucket.For.EachItem.Match(delegate(BucketItem bucketItem)
-            {
-                return !bucketItem.Unique;
-            }).Process(delegate(BucketItem bucketItem)
-            {
-                createBuilder.Append(GenerateDeclaration(bucketItem));
+                createBuilder.AppendFormat("CONSTRAINT `PK_{0}` PRIMARY KEY (`{1}`)", bucket.Name, bucketItem.Name);
                 createBuilder.Append(",\n");
             });
 
             createBuilder.Remove(createBuilder.Length - 2, 2);
 
-            // Create script if necessary
-            return string.Format(@"CREATE TABLE [{0}]({1});",
+            return string.Format(@"CREATE TABLE `{0}` ({1})",
                 fluentBucket.Entity.Name,
                 createBuilder.ToString());
         }
 
         public string GenAddColumnSql(string tablename, string columnname, Type columntype)
         {
-            return string.Format("ALTER TABLE {0} ADD [{1}] {2};",
+            return string.Format("ALTER TABLE `{0}` ADD `{1}` {2};",
                             tablename,
                             columnname,
                             GetDbType(columntype));
@@ -302,17 +298,17 @@ namespace Kiss.Linq.Sql.Sqlite
             switch (type.FullName)
             {
                 case "System.String":
-                    return "nvarchar";
+                    return "VARCHAR(2000)";
                 case "System.DateTime":
                     return "DATETIME";
                 case "System.Int32":
                     return "int";
                 case "System.Boolean":
-                    return "BOOL";
+                    return "BIT";
                 case "System.Int64":
                     return "BIGINT";
                 default:
-                    return "nvarchar";
+                    return "VARCHAR(2000)";
             }
         }
 
@@ -321,12 +317,12 @@ namespace Kiss.Linq.Sql.Sqlite
             if (item.FindAttribute(typeof(PKAttribute)) != null)
             {
                 if (item.PropertyType == typeof(int))
-                    return string.Format("[{0}] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT", item.Name);
+                    return string.Format("`{0}` int NOT NULL AUTO_INCREMENT", item.Name);
                 else
-                    return string.Format("[{0}] NVARCHAR NOT NULL PRIMARY KEY", item.Name);
+                    return string.Format("`{0}` VARCHAR(50) NOT NULL", item.Name);
             }
             else
-                return string.Format("[{0}] {1}", item.Name, GetDbType(item.PropertyType));
+                return string.Format("`{0}` {1}", item.Name, GetDbType(item.PropertyType));
         }
 
         #endregion

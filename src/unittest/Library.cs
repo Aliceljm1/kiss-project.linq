@@ -7,10 +7,10 @@ using Kiss.Linq;
 namespace Kiss.Linq.Linq2Sql.Test
 {
     [OriginalName("Bk_Library")]
-    class Library : IQueryObject
+    class Library : QueryObject<Library, int>
     {
         [PK]
-        public int Id { get; set; }
+        public override int Id { get { return base.Id; } set { base.Id = value; } }
         public string Floor
         {
             get;

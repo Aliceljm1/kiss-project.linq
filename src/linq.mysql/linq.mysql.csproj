@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{95AAD3CA-541E-4FB8-A7B3-E84D8554AA93}</ProjectGuid>
+    <ProjectGuid>{8ECBE4C2-5DCB-42EC-B11C-E0E0DF5EC042}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Kiss.Linq.Sqlite</RootNamespace>
-    <AssemblyName>Kiss.Linq.Sqlite</AssemblyName>
+    <RootNamespace>Kiss.Linq.Mysql</RootNamespace>
+    <AssemblyName>Kiss.Linq.Mysql</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -35,10 +35,10 @@
     <Reference Include="Kiss">
       <HintPath>..\..\lib\Kiss.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Data.SQLite">
-      <HintPath>..\..\lib\System.Data.SQLite.DLL</HintPath>
+    <Reference Include="mysql.data">
+      <HintPath>..\..\lib\mysql.data.dll</HintPath>
     </Reference>
+    <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -47,8 +47,8 @@
     <Compile Include="..\..\..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="SqliteDataProvider.cs" />
-    <Compile Include="SqliteFormatProvider.cs" />
+    <Compile Include="MysqlDataProvider.cs" />
+    <Compile Include="MysqlFormatProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\linq\Linq.csproj">

@@ -3,8 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
-using Kiss.Linq.Sql;
-using Kiss.Linq.Sql.DataBase;
+using Kiss.Linq.Sql.Mysql;
 using NUnit.Framework;
 
 namespace Kiss.Linq.Linq2Sql.Test
@@ -19,18 +18,8 @@ namespace Kiss.Linq.Linq2Sql.Test
                 ServiceLocator.Instance.AddComponent("fj", typeof(ITypeFinder), typeof(AppDomainTypeFinder));
             }, true);
 
-            ServiceLocator.Instance.AddComponent("System.Data.SQLite", typeof(SqliteDataProvider));
-
-            ServiceLocator.Instance.AddComponent("kiss.repository_1", typeof(IRepository<>), typeof(Repository<>));
-            ServiceLocator.Instance.AddComponent("kiss.repository_2", typeof(IRepository<,>), typeof(Repository<,>));
-
-            ConnectionStringSettings settings = ConfigurationManager.ConnectionStrings["sqlite"];
-
-            bookContext = new SqlQuery<Book>(settings);
-
-            libraryContext = new SqlQuery<Library>(settings);
-
-            shelveContext = new SqlQuery<Shelve>(settings);
+            ServiceLocator.Instance.AddComponent("System.Data.Mysql", typeof(MysqlFormatProvider));
+            ServiceLocator.Instance.AddComponent("System.Data.Sqlite", typeof(Kiss.Linq.Sql.Sqlite.SqliteDataProvider));
             // make sure the db is empty.
             DeleteAll();
         }
@@ -38,12 +27,16 @@ namespace Kiss.Linq.Linq2Sql.Test
         [SetUp]
         public void Setup()
         {
+            var libraryContext = Library.CreateContext(false);
+            var bookContext = Book.CreateContext(false);
+
             Library library = new Library { Floor = "1A", Section = "Technology" };
             libraryContext.Add(library);
             libraryContext.SubmitChanges();
 
             for (int index = 0; index < 2; index++)
             {
+                var shelveContext = Shelve.CreateContext(false);
 
                 Shelve shelve = new Shelve
                 {
@@ -91,37 +84,37 @@ namespace Kiss.Linq.Linq2Sql.Test
 
         }
 
-        [Test]
-        public void TestJoin()
-        {
-            /// Query provider fires onece
-            /// Join = 5 arguments => CreateQuery
-            /// Where = 2 arguments => CreateQuery
-            /// Expression type fires twice.
+        //[Test]
+        //public void TestJoin()
+        //{
+        //    /// Query provider fires onece
+        //    /// Join = 5 arguments => CreateQuery
+        //    /// Where = 2 arguments => CreateQuery
+        //    /// Expression type fires twice.
 
-            var query = from book in bookContext
-                        join shelve in shelveContext on book.ShelveId equals shelve.Id
-                        //where shelve.Id == 1
-                        select book;
+        //    var query = from book in bookContext
+        //                join shelve in shelveContext on book.ShelveId equals shelve.Id
+        //                //where shelve.Id == 1
+        //                select book;
 
-            foreach (Book book in query)
-            {
+        //    foreach (Book book in query)
+        //    {
 
-            }
-        }
+        //    }
+        //}
 
-        [Test]
-        public void GroupBy()
-        {
-            var query = from book in bookContext
-                        group book by book.Author into author
-                        select new { author = author };
+        //[Test]
+        //public void GroupBy()
+        //{
+        //    var query = from book in bookContext
+        //                group book by book.Author into author
+        //                select new { author = author };
 
-            foreach (var book in query)
-            {
+        //    foreach (var book in query)
+        //    {
 
-            }
-        }
+        //    }
+        //}
 
         //[Test]
         //public void Distinct()
@@ -141,6 +134,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         public void Like()
         {
             this.Add();
+
+            var bookContext = Book.CreateContext(false);
 
             var query = from book in bookContext
                         where book.Author.Contains("Don Box")
@@ -184,6 +179,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         {
             this.Add();
 
+            var bookContext = Book.CreateContext(false);
+
             var query = from book in bookContext
                         where book.Author.Equals("Don Box")
                         select book;
@@ -212,6 +209,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         {
             this.Add();
 
+            var bookContext = Book.CreateContext(false);
+
             //var query = from book in bookContext
             //            where book.Id == books[2].Id || ((book.Author == "Paolo Pialorsi" && book.ISBN == "100-11-777") || book.Author == "Mehfuz")
             //            select book;
@@ -237,6 +236,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         [Test]
         public void TestMultipleWhereExtensionCall()
         {
+            var bookContext = Book.CreateContext(false);
+
             Book book1 = new Book();
             book1.Title = "Programming Advanced LINQ";
             book1.Author = "Paolo Pialorsi";
@@ -261,6 +262,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         [Test]
         public void TestNotEqualExpression()
         {
+            var bookContext = Book.CreateContext(false);
+
             var query = from book in bookContext
                         where book.Author != "Paolo Pialorsi"
                         select book;
@@ -276,6 +279,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         {
             this.Add();
 
+            var bookContext = Book.CreateContext(false);
+
             var query = from book in bookContext
                         where book.Id > books[0].Id && book.Id < books[2].Id
                         select book;
@@ -289,6 +294,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         [Test]
         public void TestUpdateItem()
         {
+            var bookContext = Book.CreateContext(false);
+
             var query = from book0 in bookContext
                         where book0.Id == books[0].Id
                         select book0;
@@ -327,6 +334,8 @@ namespace Kiss.Linq.Linq2Sql.Test
 
             BookOrder order = BookOrder.LastUpdated;
 
+            var bookContext = Book.CreateContext(false);
+
             var query = (from q in bookContext
                          orderby order descending
                          select new { q.Id, q.Title, q.LastUpdated }).Take(1);
@@ -339,6 +348,8 @@ namespace Kiss.Linq.Linq2Sql.Test
 
         public void Add()
         {
+            var bookContext = Book.CreateContext(false);
+
             Book bk = new Book();
 
             bk.Author = "Don Box";
@@ -357,6 +368,7 @@ namespace Kiss.Linq.Linq2Sql.Test
         {
             this.Add();
             // checking complext comparsion check.
+            var bookContext = Book.CreateContext(false);
 
             var query = from q in bookContext
                         where q.Author == books[2].Author
@@ -370,6 +382,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         public void ToList()
         {
             this.Add();
+
+            var bookContext = Book.CreateContext(false);
 
             var query = from q in bookContext
                         select new { q.Id, q.ISBN };
@@ -385,6 +399,7 @@ namespace Kiss.Linq.Linq2Sql.Test
             this.Add();
             // There are three items , and two page , where pagelen is 2, then the following 
             // query is to get the item from page 2 and item no # 3, which is the lastest book.
+            var bookContext = Book.CreateContext(false);
 
             var query = from q in bookContext
                         orderby q.LastUpdated descending
@@ -399,6 +414,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         [Test]
         public void SearhByTitle()
         {
+            var bookContext = Book.CreateContext(false);
+
             var query = from book in bookContext
                         where book.Author == "Paolo Pialorsi"
                         select book;
@@ -410,6 +427,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         public void TakeAndSkipTest()
         {
             this.Add();
+
+            var bookContext = Book.CreateContext(false);
             // There are three items , and two page , where pagelen is 2, then the following 
             // query is to get the item from page 2 and item no # 3, which is the lastest book.
             // trying string order by
@@ -427,6 +446,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         [Test]
         public void SelectNotExistData()
         {
+            var bookContext = Book.CreateContext(false);
+
             var q = from book in bookContext
                     where book.Id == 1
                     select book;
@@ -438,6 +459,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         public void MultipleOrderby()
         {
             this.Add();
+
+            var bookContext = Book.CreateContext(false);
 
             var query = from book in bookContext
                         where ((book.Author == "Mehfuz" && book.ISBN == "2") || book.Id == books[2].Id) || (book.Author == "Paolo Pialorsi" && (book.ISBN == "100-11-777" || book.ISBN == "1"))
@@ -457,6 +480,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         public void SelectIn()
         {
             IList<string> authorFilters = new[] { "Paolo Pialorsi", "Robert Pickering" };
+
+            var bookContext = Book.CreateContext(false);
 
             var query = from book in bookContext
                         where authorFilters.Contains(book.Author)
@@ -487,6 +512,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         [Test]
         public void Delete()
         {
+            var bookContext = Book.CreateContext(false);
+
             int id = books[0].Id;
             Book book = new Book() { Id = id };
             bookContext.Add(book);
@@ -502,8 +529,9 @@ namespace Kiss.Linq.Linq2Sql.Test
         [Test]
         public void Transaction()
         {
-            using (TransactionScope scope = new TransactionScope(ConfigurationManager.ConnectionStrings["sqlite"]))
+            using (TransactionScope scope = new TransactionScope(Book.ConnectionStringSettings.Key))
             {
+                var bookContext = Book.CreateContext(false);
                 Book obj = new Book();
                 obj.Author = "123";
                 bookContext.Add(obj);
@@ -514,6 +542,8 @@ namespace Kiss.Linq.Linq2Sql.Test
 
                 bookContext.SubmitChanges(true);
 
+                var libraryContext = Library.CreateContext(false);
+
                 Library obj2 = new Library();
                 obj2.Floor = "123";
 
@@ -523,7 +553,7 @@ namespace Kiss.Linq.Linq2Sql.Test
                 scope.Complete();
             }
 
-            Assert.AreEqual((from q in libraryContext
+            Assert.AreEqual((from q in Library.CreateContext(false)
                              where q.Floor == "123"
                              select q).Count(), 1);
         }
@@ -579,6 +609,8 @@ namespace Kiss.Linq.Linq2Sql.Test
         }
         private void DeleteAll()
         {
+            var bookContext = Book.CreateContext(false);
+
             var query = from q in bookContext
                         select q;
 
@@ -586,6 +618,8 @@ namespace Kiss.Linq.Linq2Sql.Test
                 bookContext.Remove(book);
 
             bookContext.SubmitChanges();
+
+            var shelveContext = Shelve.CreateContext(false);
 
             var shelveQuery = from q in shelveContext
                               select q;
@@ -595,6 +629,7 @@ namespace Kiss.Linq.Linq2Sql.Test
 
             shelveContext.SubmitChanges();
 
+            var libraryContext = Library.CreateContext(false);
             var libQuery = from q in libraryContext
                            select q;
 
@@ -608,14 +643,10 @@ namespace Kiss.Linq.Linq2Sql.Test
 
         public void Dispose()
         {
-            bookContext = null;
         }
 
         #endregion
 
-        private SqlQuery<Book> bookContext;
-        private readonly SqlQuery<Library> libraryContext;
-        private readonly SqlQuery<Shelve> shelveContext;
         readonly IList<Book> books = new List<Book>();
         readonly IList<Shelve> shelves = new List<Shelve>();
     }

@@ -1,20 +1,37 @@
 ﻿using System;
 using Kiss.Linq.Fluent;
 
-namespace Kiss.Linq.Sql.Sqlite
+namespace Kiss.Linq.Sql.Mysql
 {
     /// <summary>
     /// sql lite format provider
     /// </summary>
-    public class SqliteFormatProvider : TSqlFormatProvider
+    public class MysqlFormatProvider : TSqlFormatProvider
     {
+        protected override char OpenQuote
+        {
+            get
+            {
+                return '`';
+            }
+        }
+
+        protected override char CloseQuote
+        {
+            get
+            {
+                return '`';
+            }
+        }
+
         protected override string IdentitySelectString
         {
             get
             {
-                return "last_insert_rowid()";
+                return "last_insert_id()";
             }
         }
+
         public override string ProcessFormat()
         {
             if (FluentBucket.As(bucket).Entity.ItemsToFetch != null)
@@ -33,11 +50,6 @@ namespace Kiss.Linq.Sql.Sqlite
         public override string DefineSkip()
         {
             return FluentBucket.As(bucket).Entity.ItemsToSkipFromStart.ToString();
-        }
-
-        public override string GetDateTimeValue(DateTime dt)
-        {
-            return dt.ToString("s");
         }
     }
 }

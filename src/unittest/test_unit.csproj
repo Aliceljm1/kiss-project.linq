@@ -94,6 +94,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\linq.mysql\linq.mysql.csproj">
+      <Project>{8ECBE4C2-5DCB-42EC-B11C-E0E0DF5EC042}</Project>
+      <Name>linq.mysql</Name>
+    </ProjectReference>
     <ProjectReference Include="..\linq.sqlite\linq.sqlite.csproj">
       <Project>{95AAD3CA-541E-4FB8-A7B3-E84D8554AA93}</Project>
       <Name>linq.sqlite</Name>
