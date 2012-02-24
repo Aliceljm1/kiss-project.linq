@@ -181,7 +181,7 @@ namespace Kiss.Linq.Sql
         /// <param name="connectionStringSettings"></param>
         public Repository(ConnectionStringSettings connectionStringSettings)
         {
-            ConnectionStringSettings = connectionStringSettings;
+            ConnectionStringSettings = new KeyValuePair<ConnectionStringSettings, ConnectionStringSettings>(connectionStringSettings, connectionStringSettings);
         }
 
         public Repository(string connstr_name)
@@ -207,11 +207,11 @@ namespace Kiss.Linq.Sql
         /// <returns></returns>
         public List<T> Gets(QueryCondition q)
         {
-            CheckQuery(q);
+            CheckQuery(q, ConnectionStringSettings.Key);
 
-            new DatabaseContext(ConnectionStringSettings, typeof(T));
+            new DatabaseContext(ConnectionStringSettings.Key, typeof(T));
 
-            q.FireBeforeQueryEvent("Gets", ConnectionStringSettings.ProviderName);
+            q.FireBeforeQueryEvent("Gets", ConnectionStringSettings.Key.ProviderName);
 
             if (string.IsNullOrEmpty(q.TableField))
                 q.TableField = "*";
@@ -268,11 +268,11 @@ namespace Kiss.Linq.Sql
 
         public DataTable GetDataTable(QueryCondition q)
         {
-            CheckQuery(q);
+            CheckQuery(q, ConnectionStringSettings.Key);
 
-            new DatabaseContext(ConnectionStringSettings, typeof(T));
+            new DatabaseContext(ConnectionStringSettings.Key, typeof(T));
 
-            q.FireBeforeQueryEvent("GetDataTable", ConnectionStringSettings.ProviderName);
+            q.FireBeforeQueryEvent("GetDataTable", ConnectionStringSettings.Key.ProviderName);
 
             if (string.IsNullOrEmpty(q.TableField))
                 q.TableField = "*";
@@ -311,11 +311,11 @@ namespace Kiss.Linq.Sql
         /// <returns></returns>
         public int Count(QueryCondition q)
         {
-            CheckQuery(q);
+            CheckQuery(q, ConnectionStringSettings.Key);
 
-            new DatabaseContext(ConnectionStringSettings, typeof(T));
+            new DatabaseContext(ConnectionStringSettings.Key, typeof(T));
 
-            q.FireBeforeQueryEvent("Count", ConnectionStringSettings.ProviderName);
+            q.FireBeforeQueryEvent("Count", ConnectionStringSettings.Key.ProviderName);
 
             string sql = "count" + q.WhereClause;
 
@@ -343,9 +343,9 @@ namespace Kiss.Linq.Sql
 
         public void Delete(QueryCondition q)
         {
-            CheckQuery(q);
+            CheckQuery(q, ConnectionStringSettings.Value);
 
-            q.FireBeforeQueryEvent("Delete", ConnectionStringSettings.ProviderName);
+            q.FireBeforeQueryEvent("Delete", ConnectionStringSettings.Value.ProviderName);
 
             q.Delete();
 
@@ -368,10 +368,10 @@ namespace Kiss.Linq.Sql
             return Gets(q);
         }
 
-        private void CheckQuery(QueryCondition q)
+        private void CheckQuery(QueryCondition q, ConnectionStringSettings css)
         {
             if (q.ConnectionStringSettings == null)
-                q.ConnectionStringSettings = ConnectionStringSettings;
+                q.ConnectionStringSettings = css;
 
             string tablename = Kiss.QueryObject<T>.GetTableName();
 
@@ -413,7 +413,7 @@ namespace Kiss.Linq.Sql
 
             OnCreated(e);
 
-            if (e.ConnectionStringSettings != null)
+            if (e.ConnectionStringSettings.Key != null && e.ConnectionStringSettings.Value != null)
                 ConnectionStringSettings = e.ConnectionStringSettings;
         }
 
@@ -427,13 +427,16 @@ namespace Kiss.Linq.Sql
 
     public class Repository
     {
-        public ConnectionStringSettings ConnectionStringSettings { get; set; }
+        /// <summary>
+        /// store READ and WRITE connection string as Key and Value
+        /// </summary>
+        public KeyValuePair<ConnectionStringSettings, ConnectionStringSettings> ConnectionStringSettings { get; set; }
 
         public static event EventHandler<CreatedEventArgs> Created;
 
         protected void OnCreated(CreatedEventArgs e)
         {
-            ConnectionStringSettings = LoadConn(e);
+            ConnectionStringSettings = LoadConn(e.ModelType);
 
             EventHandler<CreatedEventArgs> handler = Created;
 
@@ -443,51 +446,50 @@ namespace Kiss.Linq.Sql
             }
         }
 
-        private static Dictionary<Type, ConnectionStringSettings> _caches = new Dictionary<Type, ConnectionStringSettings>();
+        private static Dictionary<Type, KeyValuePair<ConnectionStringSettings, ConnectionStringSettings>> _caches = new Dictionary<Type, KeyValuePair<ConnectionStringSettings, ConnectionStringSettings>>();
 
-        private static ConnectionStringSettings LoadConn(CreatedEventArgs e)
+        private static KeyValuePair<ConnectionStringSettings, ConnectionStringSettings> LoadConn(Type type)
         {
-            if (_caches.ContainsKey(e.ModelType))
-                return _caches[e.ModelType];
+            if (_caches.ContainsKey(type))
+                return _caches[type];
 
             lock (_caches)
             {
-                if (_caches.ContainsKey(e.ModelType))
-                    return _caches[e.ModelType];
+                if (_caches.ContainsKey(type))
+                    return _caches[type];
 
                 Kiss.Repository.RepositoryPluginSetting setting = PluginSettings.Get<RepositoryInitializer>() as Kiss.Repository.RepositoryPluginSetting;
 
                 if (setting == null)
-                {
-                    _caches[e.ModelType] = null;
-                    return null;
-                }
+                    throw new ConfigException("cann't find RepositoryPlugin's config.");
 
                 if (string.IsNullOrEmpty(setting.DefaultConn))
-                {
-                    _caches[e.ModelType] = null;
-                    return null;
-                }
+                    throw new ConfigException("default connection string cann't be empty.");
 
-                ConnectionStringSettings connectionStringSettings = ConfigBase.GetConnectionStringSettings(setting.DefaultConn);
+                ConnectionStringSettings css = ConfigBase.GetConnectionStringSettings(setting.DefaultConn);
 
-                if (connectionStringSettings == null)
-                {
-                    _caches[e.ModelType] = null;
-                    return null;
-                }
+                if (css == null)
+                    throw new ConfigException(string.Format("cann't find default connection string setting. connection string name: ", setting.DefaultConn));
+
+                ConnectionStringSettings css_master = css;
+
+                if (!string.IsNullOrEmpty(setting.DefaultMasterConn))
+                    css_master = ConfigBase.GetConnectionStringSettings(setting.DefaultMasterConn);
+
+                if (css_master == null)
+                    throw new ConfigException(string.Format("cann't find default MASTER connection string setting. connection string name: ", setting.DefaultConn));
 
                 // save default connection string
                 if (ConfigBase.DefaultConnectionStringSettings == null)
-                    ConfigBase.DefaultConnectionStringSettings = connectionStringSettings;
+                    ConfigBase.DefaultConnectionStringSettings = css;
 
-                string tablename = Kiss.QueryObject.GetTableName(e.ModelType);
+                string tablename = Kiss.QueryObject.GetTableName(type);
 
                 foreach (var conn in setting.Conns)
                 {
                     bool match = false;
 
-                    foreach (string table in StringUtil.Split(conn.Value, ",", true, true))
+                    foreach (string table in StringUtil.Split(conn.Key.Value, ",", true, true))
                     {
                         if (table.StartsWith("*") && tablename.EndsWith(table.Substring(1), StringComparison.InvariantCultureIgnoreCase))
                             match = true;
@@ -507,20 +509,30 @@ namespace Kiss.Linq.Sql
 
                     if (match)
                     {
-                        connectionStringSettings = Config.ConfigBase.GetConnectionStringSettings(conn.Key);
+                        css = Config.ConfigBase.GetConnectionStringSettings(conn.Key.Key);
+
+                        if (css == null)
+                            throw new ConfigException(string.Format("cann't find default connection string setting. connection string name: ", conn.Key.Key));
+
+                        if (!string.IsNullOrEmpty(conn.Value["conn_master"]))
+                            css_master = Config.ConfigBase.GetConnectionStringSettings(conn.Value["conn_master"]);
+
+                        if (css_master == null)
+                            throw new ConfigException(string.Format("cann't find default MASTER connection string setting. connection string name: ", setting.DefaultConn));
+
                         break;
                     }
                 }
 
-                _caches[e.ModelType] = connectionStringSettings;
+                _caches[type] = new KeyValuePair<ConnectionStringSettings, ConnectionStringSettings>(css, css_master);
 
-                return connectionStringSettings;
+                return _caches[type];
             }
         }
 
         public class CreatedEventArgs : EventArgs
         {
-            public ConnectionStringSettings ConnectionStringSettings { get; set; }
+            public KeyValuePair<ConnectionStringSettings, ConnectionStringSettings> ConnectionStringSettings { get; set; }
 
             public Type ModelType { get; private set; }
 

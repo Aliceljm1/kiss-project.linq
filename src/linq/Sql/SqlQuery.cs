@@ -19,20 +19,7 @@ namespace Kiss.Linq.Sql
     {
         #region fields
 
-        protected ConnectionStringSettings connectionStringSettings;
-
-        private DatabaseContext _dataContext = null;
-        public DatabaseContext DataContext
-        {
-            get
-            {
-                if (_dataContext == null)
-                {
-                    _dataContext = new DatabaseContext(connectionStringSettings, typeof(T));
-                }
-                return _dataContext;
-            }
-        }
+        protected KeyValuePair<ConnectionStringSettings, ConnectionStringSettings> connectionStringSettings;
 
         public bool EnableQueryEvent { get; set; }
 
@@ -43,12 +30,18 @@ namespace Kiss.Linq.Sql
 
         #region ctor
 
-        public SqlQuery(ConnectionStringSettings connectionStringSettings)
+        public SqlQuery(ConnectionStringSettings css)
+            : this(new KeyValuePair<ConnectionStringSettings, ConnectionStringSettings>(css, css))
+        {
+
+        }
+
+        public SqlQuery(KeyValuePair<ConnectionStringSettings, ConnectionStringSettings> connectionStringSettings)
             : this(connectionStringSettings, true)
         {
         }
 
-        public SqlQuery(ConnectionStringSettings connectionStringSettings, bool enableQueryEvent)
+        public SqlQuery(KeyValuePair<ConnectionStringSettings, ConnectionStringSettings> connectionStringSettings, bool enableQueryEvent)
         {
             this.connectionStringSettings = connectionStringSettings;
             this.EnableQueryEvent = enableQueryEvent;
@@ -103,26 +96,37 @@ namespace Kiss.Linq.Sql
 
         protected override bool AddItem(IBucket bucket)
         {
-            return ExecuteReaderAndFillBucket(bucket,
-                Translate(bucket, FormatMethod.AddItem, DataContext.FormatProvider));
+            DatabaseContext dc = new DatabaseContext(connectionStringSettings.Value, typeof(T));
+
+            return ExecuteReaderAndFillBucket(dc,
+                bucket,
+                Translate(bucket, FormatMethod.AddItem, dc.FormatProvider));
         }
 
         protected override bool UpdateItem(IBucket bucket)
         {
-            return ExecuteReaderAndFillBucket(bucket,
-                Translate(bucket, FormatMethod.UpdateItem, DataContext.FormatProvider));
+            DatabaseContext dc = new DatabaseContext(connectionStringSettings.Value, typeof(T));
+
+            return ExecuteReaderAndFillBucket(dc,
+                bucket,
+                Translate(bucket, FormatMethod.UpdateItem, dc.FormatProvider));
         }
 
         protected override bool RemoveItem(IBucket bucket)
         {
-            ExecuteOnly(Translate(bucket, FormatMethod.RemoveItem, DataContext.FormatProvider));
+            DatabaseContext dc = new DatabaseContext(connectionStringSettings.Value, typeof(T));
+
+            ExecuteOnly(dc,
+                Translate(bucket, FormatMethod.RemoveItem, dc.FormatProvider));
 
             return true;
         }
 
         protected override T GetItem(IBucket bucket)
         {
-            string sql = Translate(bucket, FormatMethod.GetItem, DataContext.FormatProvider);
+            DatabaseContext dc = new DatabaseContext(connectionStringSettings.Key, typeof(T));
+
+            string sql = Translate(bucket, FormatMethod.GetItem, dc.FormatProvider);
 
             if (EnableQueryEvent)
             {
@@ -137,7 +141,8 @@ namespace Kiss.Linq.Sql
                     return (T)e.Result;
             }
 
-            T result = ExecuteSingle(sql,
+            T result = ExecuteSingle(dc,
+               sql,
                bucket);
 
             if (EnableQueryEvent)
@@ -155,7 +160,9 @@ namespace Kiss.Linq.Sql
 
         protected override void SelectItem(IBucket bucket, IModify<T> items)
         {
-            string sql = Translate(bucket, FormatMethod.Process, DataContext.FormatProvider);
+            DatabaseContext dc = new DatabaseContext(connectionStringSettings.Key, typeof(T));
+
+            string sql = Translate(bucket, FormatMethod.Process, dc.FormatProvider);
 
             if (EnableQueryEvent)
             {
@@ -173,7 +180,8 @@ namespace Kiss.Linq.Sql
                 }
             }
 
-            FillObject(bucket,
+            FillObject(dc,
+                bucket,
                 sql,
                 items,
                 bucket.Items);
@@ -193,36 +201,14 @@ namespace Kiss.Linq.Sql
 
         #region Execute Sql
 
-        private bool ExecuteMultipleStatements(IBucket bucket, string sql)
+        private int ExecuteOnly(DatabaseContext dc, string sql)
         {
-            bool status = false;
-
-            //Check if multiple queries need to be executed
-            if (sql.Contains(";"))
-            {
-                //Parse the string into seperate queries and executed them.
-                string[] delimiters = new string[] { ";" };
-                string[] queries = sql.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string sqlQuery in queries)
-                {
-                    status = ExecuteReaderAndFillBucket(bucket, sqlQuery);
-                }
-            }
-            else
-            {
-                status = ExecuteReaderAndFillBucket(bucket, sql);
-            }
-            return status;
+            return dc.ExecuteNonQuery(Transaction, sql);
         }
 
-        private int ExecuteOnly(string sql)
+        private bool ExecuteReaderAndFillBucket(DatabaseContext dc, IBucket bucket, string sql)
         {
-            return DataContext.ExecuteNonQuery(Transaction, sql);
-        }
-
-        private bool ExecuteReaderAndFillBucket(IBucket bucket, string sql)
-        {
-            using (IDataReader rdr = DataContext.ExecuteReader(Transaction, sql))
+            using (IDataReader rdr = dc.ExecuteReader(Transaction, sql))
             {
                 if (rdr.RecordsAffected == 0)
                     return false;
@@ -243,11 +229,11 @@ namespace Kiss.Linq.Sql
             return true;
         }
 
-        private T ExecuteSingle(string sql, IBucket item)
+        private T ExecuteSingle(DatabaseContext dc, string sql, IBucket item)
         {
             IDictionary<string, BucketItem> bItems = item.Items;
 
-            using (IDataReader rdr = DataContext.ExecuteReader(sql))
+            using (IDataReader rdr = dc.ExecuteReader(sql))
             {
                 T obj = default(T);
 
@@ -297,9 +283,9 @@ namespace Kiss.Linq.Sql
             return TypeConvertUtil.ConvertTo(o, targetType);
         }
 
-        private void FillObject(IBucket bucket, string sql, IModify<T> items, IDictionary<string, BucketItem> bItems)
+        private void FillObject(DatabaseContext dc, IBucket bucket, string sql, IModify<T> items, IDictionary<string, BucketItem> bItems)
         {
-            using (IDataReader rdr = DataContext.ExecuteReader(sql))
+            using (IDataReader rdr = dc.ExecuteReader(sql))
             {
                 while (rdr.Read())
                 {
@@ -336,6 +322,8 @@ namespace Kiss.Linq.Sql
 
         private void PerformChange(Bucket bucket, IList<QueryObject<T>> items)
         {
+            DatabaseContext dc = new DatabaseContext(connectionStringSettings.Value, typeof(T));
+
             StringBuilder sql = new StringBuilder();
 
             // copy item
@@ -344,16 +332,16 @@ namespace Kiss.Linq.Sql
                 bucket = item.FillBucket(bucket);
 
                 if (item.IsNewlyAdded)
-                    sql.Append(Translate(bucket, FormatMethod.BatchAdd, DataContext.FormatProvider));
+                    sql.Append(Translate(bucket, FormatMethod.BatchAdd, dc.FormatProvider));
                 else if (item.IsDeleted)
-                    sql.Append(Translate(bucket, FormatMethod.BatchRemove, DataContext.FormatProvider));
+                    sql.Append(Translate(bucket, FormatMethod.BatchRemove, dc.FormatProvider));
                 else if (item.IsAltered)
-                    sql.Append(Translate(bucket, FormatMethod.BatchUpdate, DataContext.FormatProvider));
+                    sql.Append(Translate(bucket, FormatMethod.BatchUpdate, dc.FormatProvider));
             }
 
             if (sql.Length > 0)
             {
-                ExecuteOnly(sql.ToString());
+                ExecuteOnly(dc, sql.ToString());
 
                 Kiss.QueryObject.OnBatch(typeof(T));
             }

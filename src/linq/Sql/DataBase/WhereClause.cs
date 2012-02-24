@@ -7,14 +7,14 @@ namespace Kiss.Linq.Sql.DataBase
 {
     public class WhereClause<T> : IWhere where T : IQueryObject
     {
-        private ConnectionStringSettings conn;
+        private KeyValuePair<ConnectionStringSettings, ConnectionStringSettings> conn;
         private List<string> where_clauses = new List<string>();
         private List<string> set_clauses = new List<string>();
 
         private static ILogger _logger;
         private static ILogger logger { get { if (_logger == null) _logger = LogManager.GetLogger(typeof(DatabaseContext)); return _logger; } }
 
-        public WhereClause(ConnectionStringSettings conn)
+        public WhereClause(KeyValuePair<ConnectionStringSettings, ConnectionStringSettings> conn)
         {
             this.conn = conn;
         }
@@ -44,7 +44,7 @@ namespace Kiss.Linq.Sql.DataBase
             if (e.Result != null)
                 return (int)e.Result;
 
-            int count = new DatabaseContext(conn, typeof(T)).ExecuteScalar(sql.ToString());
+            int count = new DatabaseContext(conn.Key, typeof(T)).ExecuteScalar(sql.ToString());
 
             Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
             {
@@ -69,7 +69,7 @@ namespace Kiss.Linq.Sql.DataBase
                 sql.Append(StringUtil.CollectionToDelimitedString(where_clauses, " and ", string.Empty));
             }
 
-            new DatabaseContext(conn, typeof(T)).ExecuteNonQuery(sql.ToString());
+            new DatabaseContext(conn.Value, typeof(T)).ExecuteNonQuery(sql.ToString());
 
             Kiss.QueryObject.OnBatch(typeof(T));
         }
@@ -94,7 +94,7 @@ namespace Kiss.Linq.Sql.DataBase
                 sql.Append(StringUtil.CollectionToDelimitedString(where_clauses, " and ", string.Empty));
             }
 
-            new DatabaseContext(conn, typeof(T)).ExecuteNonQuery(sql.ToString());
+            new DatabaseContext(conn.Value, typeof(T)).ExecuteNonQuery(sql.ToString());
 
             Kiss.QueryObject.OnBatch(typeof(T));
         }
