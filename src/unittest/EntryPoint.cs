@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using Kiss.Linq.Sql.Mysql;
 using NUnit.Framework;
 
 namespace Kiss.Linq.Linq2Sql.Test
@@ -18,8 +16,6 @@ namespace Kiss.Linq.Linq2Sql.Test
                 ServiceLocator.Instance.AddComponent("fj", typeof(ITypeFinder), typeof(AppDomainTypeFinder));
             }, true);
 
-            ServiceLocator.Instance.AddComponent("System.Data.Mysql", typeof(MysqlFormatProvider));
-            ServiceLocator.Instance.AddComponent("System.Data.Sqlite", typeof(Kiss.Linq.Sql.Sqlite.SqliteDataProvider));
             // make sure the db is empty.
             DeleteAll();
         }
