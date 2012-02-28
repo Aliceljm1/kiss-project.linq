@@ -515,10 +515,16 @@ namespace Kiss.Linq.Sql
                             throw new ConfigException(string.Format("cann't find default connection string setting. connection string name: ", conn.Key.Key));
 
                         if (!string.IsNullOrEmpty(conn.Value["conn_master"]))
+                        {
                             css_master = Config.ConfigBase.GetConnectionStringSettings(conn.Value["conn_master"]);
 
-                        if (css_master == null)
-                            throw new ConfigException(string.Format("cann't find default MASTER connection string setting. connection string name: ", setting.DefaultConn));
+                            if (css_master == null)
+                                throw new ConfigException(string.Format("cann't find default MASTER connection string setting. connection string name: ", setting.DefaultConn));
+                        }
+                        else
+                        {
+                            css_master = css;
+                        }
 
                         break;
                     }
