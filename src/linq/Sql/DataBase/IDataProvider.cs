@@ -20,14 +20,14 @@ namespace Kiss.Linq.Sql.DataBase
         /// <param name="tran"></param>
         /// <param name="sql"></param>
         /// <returns></returns>
-        int ExecuteScalar(IDbTransaction tran, string sql);
+        object ExecuteScalar(IDbTransaction tran, string sql);
 
         /// <summary>
         /// ExecuteScalar
         /// </summary>
         /// <param name="sql"></param>
         /// <returns></returns>
-        int ExecuteScalar(string connstring, string sql);
+        object ExecuteScalar(string connstring, string sql);
 
         /// <summary>
         /// ExecuteNonQuery
@@ -49,6 +49,9 @@ namespace Kiss.Linq.Sql.DataBase
         /// <param name="sql"></param>
         /// <returns></returns>
         IDataReader ExecuteReader(IDbTransaction tran, string sql);
+
+        DataTable ExecuteDataTable(string connstring, string sql);
+        DataTable ExecuteDataTable(IDbTransaction tran, string sql);
 
         /// <summary>
         /// sql format provider

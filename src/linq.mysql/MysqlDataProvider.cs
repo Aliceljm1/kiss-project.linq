@@ -44,7 +44,7 @@ namespace Kiss.Linq.Sql.Mysql
             return command.ExecuteNonQuery();
         }
 
-        public int ExecuteScalar(string connstring, string sql)
+        public object ExecuteScalar(string connstring, string sql)
         {
             object ret = 0;
 
@@ -61,22 +61,17 @@ namespace Kiss.Linq.Sql.Mysql
                 conn.Close();
             }
 
-            if (ret == null || ret is DBNull) return 0;
-
-            return Convert.ToInt32(ret);
+            return ret;
         }
 
-        public int ExecuteScalar(IDbTransaction tran, string sql)
+        public object ExecuteScalar(IDbTransaction tran, string sql)
         {
             IDbCommand command = tran.Connection.CreateCommand();
             command.CommandType = CommandType.Text;
             command.CommandText = sql;
             command.Transaction = tran;
 
-            object v = command.ExecuteScalar();
-            if (v == null || v is DBNull) return 0;
-
-            return Convert.ToInt32(v);
+            return command.ExecuteScalar();
         }
 
         public IDataReader ExecuteReader(string connstring, string sql)
@@ -99,6 +94,42 @@ namespace Kiss.Linq.Sql.Mysql
             command.Transaction = tran;
 
             return command.ExecuteReader();
+        }
+
+        public DataTable ExecuteDataTable(string connstring, string sql)
+        {
+            DataTable dt = new DataTable();
+
+            using (DbConnection conn = new MySqlConnection(connstring))
+            {
+                conn.Open();
+
+                DbCommand command = new MySqlCommand(sql, (MySqlConnection)conn);
+                command.CommandType = CommandType.Text;
+                command.CommandText = sql;
+
+                MySqlDataAdapter da = new MySqlDataAdapter((MySqlCommand)command);
+
+                da.Fill(dt);
+            }
+
+            return dt;
+        }
+
+        public DataTable ExecuteDataTable(IDbTransaction tran, string sql)
+        {
+            DataTable dt = new DataTable();
+
+            IDbCommand command = new MySqlCommand(sql, (MySqlConnection)tran.Connection);
+            command.CommandType = CommandType.Text;
+            command.CommandText = sql;
+            command.Transaction = tran;
+
+            MySqlDataAdapter da = new MySqlDataAdapter((MySqlCommand)command);
+
+            da.Fill(dt);
+
+            return dt;
         }
 
         public IFormatProvider GetFormatProvider(string connstring) { return new MysqlFormatProvider(); }
@@ -133,7 +164,11 @@ namespace Kiss.Linq.Sql.Mysql
 
             logger.Debug(sql);
 
-            return ExecuteScalar(q.ConnectionString, sql);
+            object ret = ExecuteScalar(q.ConnectionString, sql);
+
+            if (ret == null || ret is DBNull) return 0;
+
+            return Convert.ToInt32(ret);
         }
 
         public IDataReader GetReader(QueryCondition condition)

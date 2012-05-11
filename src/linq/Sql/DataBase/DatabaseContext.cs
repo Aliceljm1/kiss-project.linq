@@ -102,7 +102,7 @@ namespace Kiss.Linq.Sql.DataBase
             }
         }
 
-        public int ExecuteScalar(IDbTransaction tran, string sql)
+        public object ExecuteScalar(IDbTransaction tran, string sql)
         {
             if (tran == null)
                 return ExecuteScalar(sql);
@@ -113,7 +113,7 @@ namespace Kiss.Linq.Sql.DataBase
             return dbAccess.ExecuteScalar(tran, sql);
         }
 
-        public int ExecuteScalar(string sql)
+        public object ExecuteScalar(string sql)
         {
             if (logger != null)
                 logger.Debug(sql);
@@ -147,6 +147,32 @@ namespace Kiss.Linq.Sql.DataBase
             try
             {
                 return dbAccess.ExecuteReader(connstring, sql);
+            }
+            catch (Exception ex)
+            {
+                throw new LinqException(sql, ex);
+            }
+        }
+
+        public DataTable ExecuteDataTable(IDbTransaction tran, string sql)
+        {
+            if (tran == null)
+                return ExecuteDataTable(sql);
+
+            if (logger != null)
+                logger.Debug(sql);
+
+            return dbAccess.ExecuteDataTable(tran, sql);
+        }
+
+        public DataTable ExecuteDataTable(string sql)
+        {
+            if (logger != null)
+                logger.Debug(sql);
+
+            try
+            {
+                return dbAccess.ExecuteDataTable(connstring, sql);
             }
             catch (Exception ex)
             {

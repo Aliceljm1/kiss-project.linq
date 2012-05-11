@@ -44,7 +44,7 @@ namespace Kiss.Linq.Sql.Sqlite
             return command.ExecuteNonQuery();
         }
 
-        public int ExecuteScalar(string connstring, string sql)
+        public object ExecuteScalar(string connstring, string sql)
         {
             object ret = 0;
 
@@ -61,22 +61,17 @@ namespace Kiss.Linq.Sql.Sqlite
                 conn.Close();
             }
 
-            if (ret == null || ret is DBNull) return 0;
-
-            return Convert.ToInt32(ret);
+            return ret;
         }
 
-        public int ExecuteScalar(IDbTransaction tran, string sql)
+        public object ExecuteScalar(IDbTransaction tran, string sql)
         {
             IDbCommand command = tran.Connection.CreateCommand();
             command.CommandType = CommandType.Text;
             command.CommandText = sql;
             command.Transaction = tran;
 
-            object v = command.ExecuteScalar();
-            if (v == null || v is DBNull) return 0;
-
-            return Convert.ToInt32(v);
+            return command.ExecuteScalar();
         }
 
         public IDataReader ExecuteReader(string connstring, string sql)
@@ -99,6 +94,42 @@ namespace Kiss.Linq.Sql.Sqlite
             command.Transaction = tran;
 
             return command.ExecuteReader();
+        }
+
+        public DataTable ExecuteDataTable(string connstring, string sql)
+        {
+            DataTable dt = new DataTable();
+
+            using (DbConnection conn = new SQLiteConnection(connstring))
+            {
+                conn.Open();
+
+                DbCommand command = new SQLiteCommand(sql, (SQLiteConnection)conn);
+                command.CommandType = CommandType.Text;
+                command.CommandText = sql;
+
+                SQLiteDataAdapter da = new SQLiteDataAdapter((SQLiteCommand)command);
+
+                da.Fill(dt);
+            }
+
+            return dt;
+        }
+
+        public DataTable ExecuteDataTable(IDbTransaction tran, string sql)
+        {
+            DataTable dt = new DataTable();
+
+            IDbCommand command = new SQLiteCommand(sql, (SQLiteConnection)tran.Connection);
+            command.CommandType = CommandType.Text;
+            command.CommandText = sql;
+            command.Transaction = tran;
+
+            SQLiteDataAdapter da = new SQLiteDataAdapter((SQLiteCommand)command);
+
+            da.Fill(dt);
+
+            return dt;
         }
 
         public IFormatProvider GetFormatProvider(string connstring) { return new SqliteFormatProvider(); }
@@ -133,7 +164,11 @@ namespace Kiss.Linq.Sql.Sqlite
 
             logger.Debug(sql);
 
-            return ExecuteScalar(q.ConnectionString, sql);
+            object ret = ExecuteScalar(q.ConnectionString, sql);
+
+            if (ret == null || ret is DBNull) return 0;
+
+            return Convert.ToInt32(ret);
         }
 
         public IDataReader GetReader(QueryCondition condition)

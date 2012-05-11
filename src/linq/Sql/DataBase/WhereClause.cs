@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Text;
 using Kiss.Utils;
 
@@ -44,7 +46,11 @@ namespace Kiss.Linq.Sql.DataBase
             if (e.Result != null)
                 return (int)e.Result;
 
-            int count = new DatabaseContext(conn.Key, typeof(T)).ExecuteScalar(sql.ToString());
+            object ret = new DatabaseContext(conn.Key, typeof(T)).ExecuteScalar(sql.ToString());
+
+            if (ret == null || ret is DBNull) return 0;
+
+            int count = Convert.ToInt32(ret);
 
             Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
             {
@@ -111,6 +117,82 @@ namespace Kiss.Linq.Sql.DataBase
             where_clauses.Add(string.Format(where, args));
 
             return this;
+        }
+
+        public t Select<t>(string field)
+        {
+            if (string.IsNullOrEmpty(field)) return default(t);
+
+            StringBuilder sql = new StringBuilder();
+
+            sql.AppendFormat("select {0} from {1}", field, Kiss.QueryObject<T>.GetTableName());
+
+            if (where_clauses.Count > 0)
+            {
+                sql.Append(" where ");
+
+                sql.Append(StringUtil.CollectionToDelimitedString(where_clauses, " and ", string.Empty));
+            }
+
+            string cacheKey = sql.ToString();
+
+            Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
+            {
+                Type = typeof(T),
+                Sql = cacheKey
+            };
+            Kiss.QueryObject.OnPreQuery(e);
+
+            if (e.Result != null)
+                return (t)e.Result;
+
+            t value = TypeConvertUtil.ConvertTo<t>(new DatabaseContext(conn.Key, typeof(T)).ExecuteScalar(sql.ToString()));
+
+            Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
+            {
+                Type = typeof(T),
+                Sql = cacheKey,
+                Result = value
+            });
+
+            return value;
+        }
+
+        public DataTable Select(params string[] fields)
+        {
+            StringBuilder sql = new StringBuilder();
+
+            sql.AppendFormat("select {0} from {1}", StringUtil.CollectionToCommaDelimitedString(fields), Kiss.QueryObject<T>.GetTableName());
+
+            if (where_clauses.Count > 0)
+            {
+                sql.Append(" where ");
+
+                sql.Append(StringUtil.CollectionToDelimitedString(where_clauses, " and ", string.Empty));
+            }
+
+            string cacheKey = sql.ToString();
+
+            Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
+            {
+                Type = typeof(T),
+                Sql = cacheKey
+            };
+            Kiss.QueryObject.OnPreQuery(e);
+
+            if (e.Result != null)
+                return (DataTable)e.Result;
+
+            DataTable dt = new DatabaseContext(conn.Key, typeof(T)).ExecuteDataTable(sql.ToString());
+
+            Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
+            {
+                Type = typeof(T),
+                Sql = cacheKey,
+                Result = dt
+            });
+
+            return dt;
         }
     }
 }
