@@ -352,7 +352,10 @@ namespace Kiss.Linq.Sql
                         DataRow row = dt.NewRow();
                         foreach (var bi in bucket.Items.Values)
                         {
-                            row[bi.Name] = bi.Value;
+                            if (bi.PropertyType == typeof(DateTime) && ((DateTime)bi.Value == DateTime.MinValue || (DateTime)bi.Value == DateTime.MaxValue))
+                                row[bi.Name] = DBNull.Value;
+                            else
+                                row[bi.Name] = bi.Value;
                         }
 
                         dt.Rows.Add(row);
