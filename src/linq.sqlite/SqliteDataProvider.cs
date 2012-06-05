@@ -180,12 +180,12 @@ namespace Kiss.Linq.Sql.Sqlite
             return ExecuteReader(condition.ConnectionString, sql);
         }
 
-        public IDbTransaction BeginTransaction(string connectionstring)
+        public IDbTransaction BeginTransaction(string connectionstring, IsolationLevel isolationLevel)
         {
             SQLiteConnection connection = new SQLiteConnection(connectionstring);
             connection.Open();
 
-            return connection.BeginTransaction();
+            return connection.BeginTransaction(isolationLevel);
         }
 
         private static string combin_sql(QueryCondition condition)
@@ -365,5 +365,12 @@ namespace Kiss.Linq.Sql.Sqlite
         }
 
         #endregion
+
+        public bool SupportBulkCopy { get { return false; } }
+
+        public void BulkCopy(string connstring, DataTable dt)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

@@ -81,16 +81,14 @@ namespace Kiss.Linq.Sql.DataBase
             if (tran == null)
                 return ExecuteNonQuery(sql);
 
-            if (logger != null)
-                logger.Debug(sql);
+            logger.Debug(sql);
 
             return dbAccess.ExecuteNonQuery(tran, sql);
         }
 
         public int ExecuteNonQuery(string sql)
         {
-            if (logger != null)
-                logger.Debug(sql);
+            logger.Debug(sql);
 
             try
             {
@@ -107,16 +105,14 @@ namespace Kiss.Linq.Sql.DataBase
             if (tran == null)
                 return ExecuteScalar(sql);
 
-            if (logger != null)
-                logger.Debug(sql);
+            logger.Debug(sql);
 
             return dbAccess.ExecuteScalar(tran, sql);
         }
 
         public object ExecuteScalar(string sql)
         {
-            if (logger != null)
-                logger.Debug(sql);
+            logger.Debug(sql);
 
             try
             {
@@ -133,16 +129,14 @@ namespace Kiss.Linq.Sql.DataBase
             if (tran == null)
                 return ExecuteReader(sql);
 
-            if (logger != null)
-                logger.Debug(sql);
+            logger.Debug(sql);
 
             return dbAccess.ExecuteReader(tran, sql);
         }
 
         public IDataReader ExecuteReader(string sql)
         {
-            if (logger != null)
-                logger.Debug(sql);
+            logger.Debug(sql);
 
             try
             {
@@ -159,16 +153,14 @@ namespace Kiss.Linq.Sql.DataBase
             if (tran == null)
                 return ExecuteDataTable(sql);
 
-            if (logger != null)
-                logger.Debug(sql);
+            logger.Debug(sql);
 
             return dbAccess.ExecuteDataTable(tran, sql);
         }
 
         public DataTable ExecuteDataTable(string sql)
         {
-            if (logger != null)
-                logger.Debug(sql);
+            logger.Debug(sql);
 
             try
             {
@@ -177,6 +169,22 @@ namespace Kiss.Linq.Sql.DataBase
             catch (Exception ex)
             {
                 throw new LinqException(sql, ex);
+            }
+        }
+
+        public bool SupportBulkCopy { get { return dbAccess.SupportBulkCopy; } }
+
+        public void BulkCopy(DataTable dt)
+        {
+            logger.Debug("execute bulk copy. total count: {0}", dt.Rows.Count);
+
+            try
+            {
+                dbAccess.BulkCopy(connstring, dt);
+            }
+            catch (Exception ex)
+            {
+                throw new LinqException("execute bulk copy error!", ex);
             }
         }
 

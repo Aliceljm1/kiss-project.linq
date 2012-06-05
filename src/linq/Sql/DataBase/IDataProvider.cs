@@ -7,6 +7,9 @@ namespace Kiss.Linq.Sql.DataBase
     /// </summary>
     public interface IDataProvider
     {
+        bool SupportBulkCopy { get; }
+        void BulkCopy(string connstring, DataTable dt);
+
         /// <summary>
         /// ExecuteNonQuery
         /// </summary>

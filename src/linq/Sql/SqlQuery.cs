@@ -326,25 +326,63 @@ namespace Kiss.Linq.Sql
 
             StringBuilder sql = new StringBuilder();
 
+            DataTable dt = null;
+
+            if (dc.SupportBulkCopy)
+            {
+                dt = new DataTable(bucket.Name);
+                foreach (var item in bucket.Items.Values)
+                {
+                    Type t = item.PropertyType;
+                    if (Nullable.GetUnderlyingType(item.PropertyType) != null)
+                        t = Nullable.GetUnderlyingType(item.PropertyType);
+                    dt.Columns.Add(item.Name, t);
+                }
+            }
+
             // copy item
             foreach (var item in items)
             {
                 bucket = item.FillBucket(bucket);
 
                 if (item.IsNewlyAdded)
-                    sql.Append(Translate(bucket, FormatMethod.BatchAdd, dc.FormatProvider));
+                {
+                    if (dc.SupportBulkCopy)
+                    {
+                        DataRow row = dt.NewRow();
+                        foreach (var bi in bucket.Items.Values)
+                        {
+                            row[bi.Name] = bi.Value;
+                        }
+
+                        dt.Rows.Add(row);
+                    }
+                    else
+                    {
+                        sql.Append(Translate(bucket, FormatMethod.BatchAdd, dc.FormatProvider));
+                    }
+                }
                 else if (item.IsDeleted)
+                {
                     sql.Append(Translate(bucket, FormatMethod.BatchRemove, dc.FormatProvider));
+                }
                 else if (item.IsAltered)
+                {
                     sql.Append(Translate(bucket, FormatMethod.BatchUpdate, dc.FormatProvider));
+                }
             }
 
             if (sql.Length > 0)
             {
                 ExecuteOnly(dc, sql.ToString());
-
-                Kiss.QueryObject.OnBatch(typeof(T));
             }
+
+            if (dc.SupportBulkCopy)
+            {
+                dc.BulkCopy(dt);
+            }
+
+            Kiss.QueryObject.OnBatch(typeof(T));
         }
 
         private static string Translate(IBucket bucket, FormatMethod method, IFormatProvider formatProvider)
