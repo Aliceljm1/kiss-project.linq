@@ -185,6 +185,10 @@ namespace Kiss.Linq.Sql.Sqlite
             SQLiteConnection connection = new SQLiteConnection(connectionstring);
             connection.Open();
 
+            // sqlite don't support full IsolationLevel
+            if (isolationLevel != IsolationLevel.Serializable && isolationLevel != IsolationLevel.ReadCommitted)
+                isolationLevel = IsolationLevel.ReadCommitted;
+
             return connection.BeginTransaction(isolationLevel);
         }
 
