@@ -146,7 +146,13 @@ namespace Kiss.Linq.Sql.DataBase
             if (e.Result != null)
                 return (t)e.Result;
 
-            t value = TypeConvertUtil.ConvertTo<t>(new DatabaseContext(conn.Key, typeof(T)).ExecuteScalar(sql.ToString()));
+            t value;
+
+            object ret = new DatabaseContext(conn.Key, typeof(T)).ExecuteScalar(sql.ToString());
+            if (ret == null || ret is DBNull)
+                value = default(t);
+            else
+                value = TypeConvertUtil.ConvertTo<t>(ret);
 
             Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
             {
