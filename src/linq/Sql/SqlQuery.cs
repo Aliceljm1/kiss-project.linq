@@ -324,7 +324,7 @@ namespace Kiss.Linq.Sql
         {
             DatabaseContext dc = new DatabaseContext(connectionStringSettings.Value, typeof(T));
 
-            StringBuilder sql = new StringBuilder();
+            List<string> sqls = new List<string>();
 
             DataTable dt = null;
 
@@ -362,22 +362,27 @@ namespace Kiss.Linq.Sql
                     }
                     else
                     {
-                        sql.Append(Translate(bucket, FormatMethod.BatchAdd, dc.FormatProvider));
+                        sqls.Add(Translate(bucket, FormatMethod.BatchAdd, dc.FormatProvider));
                     }
                 }
                 else if (item.IsDeleted)
                 {
-                    sql.Append(Translate(bucket, FormatMethod.BatchRemove, dc.FormatProvider));
+                    sqls.Add(Translate(bucket, FormatMethod.BatchRemove, dc.FormatProvider));
                 }
                 else if (item.IsAltered)
                 {
-                    sql.Append(Translate(bucket, FormatMethod.BatchUpdate, dc.FormatProvider));
+                    sqls.Add(Translate(bucket, FormatMethod.BatchUpdate, dc.FormatProvider));
                 }
             }
 
-            if (sql.Length > 0)
+            if (sqls.Count > 0)
             {
-                ExecuteOnly(dc, sql.ToString());
+                int pc = (int)Math.Ceiling(sqls.Count / 1000.0);
+
+                for (int i = 0; i < pc; i++)
+                {
+                    ExecuteOnly(dc, sqls.GetRange(i * 1000, Math.Min(sqls.Count - i * 1000, 1000)).Join(string.Empty));
+                }
             }
 
             if (dc.SupportBulkCopy)
