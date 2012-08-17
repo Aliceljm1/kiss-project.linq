@@ -370,11 +370,34 @@ namespace Kiss.Linq.Sql.Sqlite
 
         #endregion
 
-        public bool SupportBulkCopy { get { return false; } }
-
-        public void BulkCopy(string connstring, DataTable dt)
+        public List<QueryObject<T>> BulkCopy<T>(string connstring, Bucket bucket, IList<QueryObject<T>> items) where T : IQueryObject, new()
         {
-            throw new NotSupportedException();
+            List<QueryObject<T>> list = new List<QueryObject<T>>(items);
+
+            List<QueryObject<T>> newly_list = list.FindAll((i) => { return i.IsNewlyAdded; });
+            if (newly_list.Count == 0) return list;
+
+            IFormatProvider fp = GetFormatProvider(connstring);
+
+            string sql_pre = SqlQuery<T>.Translate(bucket, FormatMethod.BatchAdd, fp);
+
+            List<string> datas = new List<string>();
+
+            foreach (var item in newly_list)
+            {
+                datas.Add(SqlQuery<T>.Translate(item.FillBucket(bucket), FormatMethod.BatchAddValues, fp));
+            }
+
+            int ps = 1000;
+
+            int pc = (int)Math.Ceiling(datas.Count / (ps * 1.0));
+            for (int i = 0; i < pc; i++)
+            {
+                ExecuteNonQuery(connstring, sql_pre + datas.GetRange(i * ps, Math.Min(datas.Count - i * ps, ps)).Join(StringUtil.Comma));
+            }
+
+            list.RemoveAll((i) => { return i.IsNewlyAdded; });
+            return list;
         }
     }
 }

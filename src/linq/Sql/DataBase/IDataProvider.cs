@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 
 namespace Kiss.Linq.Sql.DataBase
 {
@@ -7,8 +8,7 @@ namespace Kiss.Linq.Sql.DataBase
     /// </summary>
     public interface IDataProvider
     {
-        bool SupportBulkCopy { get; }
-        void BulkCopy(string connstring, DataTable dt);
+        List<QueryObject<T>> BulkCopy<T>(string connstring, Bucket bucket, IList<QueryObject<T>> items) where T : IQueryObject, new();
 
         /// <summary>
         /// ExecuteNonQuery

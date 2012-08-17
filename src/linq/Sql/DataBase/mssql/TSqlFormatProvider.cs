@@ -72,7 +72,12 @@ namespace Kiss.Linq.Sql
 
         public virtual string BatchAddItemFormat()
         {
-            return @"INSERT INTO ${Entity} ( ${TobeInsertedFields} ) VALUES (${TobeInsertedValues});";
+            return @"INSERT INTO ${Entity} ( ${TobeInsertedFields} ) VALUES ";
+        }
+
+        public virtual string BatchAddItemValuesFormat()
+        {
+            return @"(${TobeInsertedValues})";
         }
 
         public string UpdateItemFormat()

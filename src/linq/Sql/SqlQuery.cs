@@ -324,76 +324,38 @@ namespace Kiss.Linq.Sql
         {
             DatabaseContext dc = new DatabaseContext(connectionStringSettings.Value, typeof(T));
 
+            // 1，首先尝试批处理该集合
+            List<QueryObject<T>> list = dc.BulkCopy<T>(bucket, items);
+
+            // 2，处理批处理没有处理的数据
             List<string> sqls = new List<string>();
 
-            DataTable dt = null;
-
-            if (dc.SupportBulkCopy)
+            foreach (var item in list)
             {
-                dt = new DataTable(bucket.Name);
-                foreach (var item in bucket.Items.Values)
-                {
-                    Type t = item.PropertyType;
-                    if (Nullable.GetUnderlyingType(item.PropertyType) != null)
-                        t = Nullable.GetUnderlyingType(item.PropertyType);
-                    dt.Columns.Add(item.Name, t);
-                }
-            }
-
-            // copy item
-            foreach (var item in items)
-            {
-                bucket = item.FillBucket(bucket);
+                Bucket bkt = item.FillBucket(bucket);
 
                 if (item.IsNewlyAdded)
-                {
-                    if (dc.SupportBulkCopy)
-                    {
-                        DataRow row = dt.NewRow();
-                        foreach (var bi in bucket.Items.Values)
-                        {
-                            if (bi.PropertyType == typeof(DateTime) && ((DateTime)bi.Value == DateTime.MinValue || (DateTime)bi.Value == DateTime.MaxValue))
-                                row[bi.Name] = DBNull.Value;
-                            else
-                                row[bi.Name] = bi.Value;
-                        }
-
-                        dt.Rows.Add(row);
-                    }
-                    else
-                    {
-                        sqls.Add(Translate(bucket, FormatMethod.BatchAdd, dc.FormatProvider));
-                    }
-                }
+                    sqls.Add(Translate(bkt, FormatMethod.BatchAdd, dc.FormatProvider));
                 else if (item.IsDeleted)
-                {
-                    sqls.Add(Translate(bucket, FormatMethod.BatchRemove, dc.FormatProvider));
-                }
+                    sqls.Add(Translate(bkt, FormatMethod.BatchRemove, dc.FormatProvider));
                 else if (item.IsAltered)
-                {
-                    sqls.Add(Translate(bucket, FormatMethod.BatchUpdate, dc.FormatProvider));
-                }
+                    sqls.Add(Translate(bkt, FormatMethod.BatchUpdate, dc.FormatProvider));
             }
 
             if (sqls.Count > 0)
             {
-                int pc = (int)Math.Ceiling(sqls.Count / 1000.0);
+                int pc = (int)Math.Ceiling(sqls.Count / 100.0);
 
                 for (int i = 0; i < pc; i++)
                 {
-                    ExecuteOnly(dc, sqls.GetRange(i * 1000, Math.Min(sqls.Count - i * 1000, 1000)).Join(string.Empty));
+                    ExecuteOnly(dc, sqls.GetRange(i * 100, Math.Min(sqls.Count - i * 100, 100)).Join(string.Empty));
                 }
-            }
-
-            if (dc.SupportBulkCopy)
-            {
-                dc.BulkCopy(dt);
             }
 
             Kiss.QueryObject.OnBatch(typeof(T));
         }
 
-        private static string Translate(IBucket bucket, FormatMethod method, IFormatProvider formatProvider)
+        public static string Translate(IBucket bucket, FormatMethod method, IFormatProvider formatProvider)
         {
             formatProvider.Initialize(bucket);
 
@@ -432,6 +394,9 @@ namespace Kiss.Linq.Sql
                     break;
                 case FormatMethod.BatchAdd:
                     selectorString = formatProvider.BatchAddItemFormat();
+                    break;
+                case FormatMethod.BatchAddValues:
+                    selectorString = formatProvider.BatchAddItemValuesFormat();
                     break;
                 case FormatMethod.BatchUpdate:
                     selectorString = formatProvider.BatchUpdateItemFormat();

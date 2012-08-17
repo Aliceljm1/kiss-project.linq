@@ -19,6 +19,7 @@ namespace Kiss.Linq.Sql
         string UpdateItemFormat ( );
         string RemoveItemFormat ( );
         string BatchAddItemFormat();
+        string BatchAddItemValuesFormat();
         string BatchUpdateItemFormat();
         string BatchRemoveItemFormat();
 
@@ -33,6 +34,7 @@ namespace Kiss.Linq.Sql
         UpdateItem,
         RemoveItem,
         BatchAdd,
+        BatchAddValues,
         BatchUpdate,
         BatchRemove
     }

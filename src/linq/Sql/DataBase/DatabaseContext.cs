@@ -4,6 +4,7 @@ using System.Data;
 using Kiss.Plugin;
 using Kiss.Repository;
 using Kiss.Utils;
+using System.Collections.Generic;
 
 namespace Kiss.Linq.Sql.DataBase
 {
@@ -172,15 +173,13 @@ namespace Kiss.Linq.Sql.DataBase
             }
         }
 
-        public bool SupportBulkCopy { get { return dbAccess.SupportBulkCopy; } }
-
-        public void BulkCopy(DataTable dt)
+        public List<QueryObject<T>> BulkCopy<T>(Bucket bucket, IList<QueryObject<T>> items) where T : IQueryObject, new()
         {
-            logger.Debug("execute bulk copy. total count: {0}", dt.Rows.Count);
+            logger.Debug("execute bulk copy. total count: {0}", items.Count);
 
             try
             {
-                dbAccess.BulkCopy(connstring, dt);
+                return dbAccess.BulkCopy<T>(connstring, bucket, items);
             }
             catch (Exception ex)
             {
