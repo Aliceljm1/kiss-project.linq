@@ -379,7 +379,7 @@ namespace Kiss.Linq.Sql.Sqlite
 
             IFormatProvider fp = GetFormatProvider(connstring);
 
-            string sql_pre = SqlQuery<T>.Translate(bucket, FormatMethod.BatchAdd, fp);
+            string sql_pre = SqlQuery<T>.Translate(newly_list[0].FillBucket(bucket), FormatMethod.BatchAdd, fp);
 
             List<string> datas = new List<string>();
 
