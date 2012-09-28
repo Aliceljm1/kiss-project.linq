@@ -15,7 +15,7 @@ namespace Kiss.Linq.Sql
 
         protected virtual char OpenQuote { get { return '['; } }
         protected virtual char CloseQuote { get { return ']'; } }
-        
+
         public string Quote(string entity)
         {
             if (entity[0] == OpenQuote)
@@ -72,12 +72,12 @@ namespace Kiss.Linq.Sql
 
         public virtual string BatchAddItemFormat()
         {
-            return @"INSERT INTO ${Entity} ( ${TobeInsertedFields} ) VALUES ";
+            return @"INSERT INTO ${Entity} ( ${TobeBatchInsertedFields} ) VALUES ";
         }
 
         public virtual string BatchAddItemValuesFormat()
         {
-            return @"(${TobeInsertedValues})";
+            return @"(${TobeBatchInsertedValues})";
         }
 
         public string UpdateItemFormat()
@@ -156,6 +156,46 @@ namespace Kiss.Linq.Sql
                                builder.Append(",");
                            builder.Append(GetValue(item.Value));
                        }
+               });
+
+            return builder.ToString();
+        }
+
+        public string DefineBatchTobeInsertedFields()
+        {
+            List<string> list = new List<string>();
+
+            FluentBucket.As(bucket).For.EachItem
+                .Process(delegate(BucketItem item)
+                {
+                    if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
+                        list.Add(Quote(item.Name));
+                });
+
+            return string.Join(",", list.ToArray());
+        }
+
+        public string DefineBatchTobeInsertedValues()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            FluentBucket.As(bucket).For.EachItem
+               .Process(delegate(BucketItem item)
+               {
+                   if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
+                   {
+                       if (builder.Length > 0)
+                           builder.Append(",");
+
+                       if (HasValue(item.Value))
+                       {
+                           builder.Append(GetValue(item.Value));
+                       }
+                       else
+                       {
+                           builder.Append(GetValue(TypeConvertUtil.ConvertTo(string.Empty, item.PropertyType)));
+                       }
+                   }
                });
 
             return builder.ToString();
@@ -425,6 +465,10 @@ namespace Kiss.Linq.Sql
                     return DefineTobeInsertedFields();
                 case "TobeInsertedValues":
                     return DefineTobeInsertedValues();
+                case "TobeBatchInsertedFields":
+                    return DefineBatchTobeInsertedFields();
+                case "TobeBatchInsertedValues":
+                    return DefineBatchTobeInsertedValues();
                 case "Skip":
                     return DefineSkip();
                 case "UpdateItems":

@@ -652,20 +652,22 @@ CREATE TABLE [{0}]
 
                 foreach (var bi in item.FillBucket(bucket).Items.Values)
                 {
-                    if (bi.PropertyType == typeof(DateTime) && ((DateTime)bi.Value == DateTime.MinValue || (DateTime)bi.Value == DateTime.MaxValue))
+                    if (bi.Value == null)
+                        row[bi.Name] = DBNull.Value;
+                    else if (bi.PropertyType == typeof(DateTime) && ((DateTime)bi.Value == DateTime.MinValue || (DateTime)bi.Value == DateTime.MaxValue))
                         row[bi.Name] = DBNull.Value;
                     else
                         row[bi.Name] = bi.Value;
                 }
 
                 dt.Rows.Add(row);
-            }                      
+            }
 
             if (dt.Rows.Count == 0) return list;
 
             using (SqlConnection conn = new SqlConnection(connstring))
             {
-                SqlBulkCopy bulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepNulls, null);
+                SqlBulkCopy bulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, null);
 
                 foreach (DataColumn column in dt.Columns)
                 {
