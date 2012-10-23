@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Kiss.Linq.Fluent;
+using Kiss.Linq.Sql.DataBase;
+using Kiss.Query;
+using Kiss.Utils;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.Text;
-using Kiss.Linq.Fluent;
-using Kiss.Linq.Sql.DataBase;
-using Kiss.Query;
-using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.Sqlite
 {

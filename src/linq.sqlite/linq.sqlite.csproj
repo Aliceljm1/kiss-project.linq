@@ -46,9 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\..\..\CommonAssemblyInfo.cs">
-      <Link>Properties\CommonAssemblyInfo.cs</Link>
-    </Compile>
+    <Compile Include="Properties\CommonAssemblyInfo.cs" />
     <Compile Include="SqliteDataProvider.cs" />
     <Compile Include="SqliteFormatProvider.cs" />
   </ItemGroup>

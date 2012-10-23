@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Kiss.Linq.Fluent;
+using Kiss.Query;
+using Kiss.Utils;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Text;
-using Kiss.Linq.Fluent;
-using Kiss.Query;
-using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.DataBase
 {
@@ -262,7 +262,7 @@ namespace Kiss.Linq.Sql.DataBase
                 else
                 {
                     int startIndex = query.PageSize * query.PageIndex + 1;
-                    sql = string.Format("WITH tempTab AS ( SELECT {1}, ROW_NUMBER() OVER (Order By {0}) AS Row from {2} {3})  Select * FROM tempTab Where Row between {4} and {5}",
+                    sql = string.Format("WITH tempTab AS (SELECT *,ROW_NUMBER() OVER (Order By {0}) AS Row from (SELECT {1} from {2} {3}) as t) Select * FROM tempTab Where Row between {4} and {5}",
                         StringUtil.HasText(query.OrderByClause) ? query.OrderByClause : "rand()",
                         query.TableField,
                         query.TableName,

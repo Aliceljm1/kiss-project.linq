@@ -1,5 +1,5 @@
-﻿using System;
-using Kiss.Linq.Fluent;
+﻿using Kiss.Linq.Fluent;
+using System;
 
 namespace Kiss.Linq.Sql.Sqlite
 {

@@ -86,6 +86,7 @@
     <Compile Include="Fluent\FluentExpressionTree.cs" />
     <Compile Include="Fluent\FluentIterator.cs" />
     <Compile Include="Interface\IBucket.cs" />
+    <Compile Include="Properties\CommonAssemblyInfo.cs" />
     <Compile Include="Sql\DataBase\mssql\TSql2000FormatProvider.cs" />
     <Compile Include="Sql\DataBase\WhereClause.cs" />
     <Compile Include="Sql\IFormatProvider.cs" />
@@ -115,9 +116,6 @@
     <Compile Include="Query.cs" />
     <Compile Include="Collection\QueryCollection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\..\..\CommonAssemblyInfo.cs">
-      <Link>Properties\CommonAssemblyInfo.cs</Link>
-    </Compile>
     <Compile Include="QueryExtension.cs" />
   </ItemGroup>
   <ItemGroup>
