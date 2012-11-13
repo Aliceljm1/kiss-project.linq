@@ -1,5 +1,4 @@
-﻿using System;
-using Kiss.Linq.Fluent;
+﻿using Kiss.Linq.Fluent;
 
 namespace Kiss.Linq.Sql.Mysql
 {
@@ -22,6 +21,11 @@ namespace Kiss.Linq.Sql.Mysql
             {
                 return '`';
             }
+        }
+
+        public override string Escape(string value)
+        {
+            return value.Replace(@"\", @"\\").Replace("'", "''").Trim();
         }
 
         protected override string IdentitySelectString

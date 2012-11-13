@@ -383,10 +383,12 @@ namespace Kiss.Linq.Sql
             else
                 value = Convert.ToString(obj);
 
-            value = value.Replace("'", "''").Trim();
+            return string.Format("'{0}'", Escape(value));
+        }
 
-            value = "'" + value + "'";
-            return value;
+        public virtual string Escape(string value)
+        {
+            return value.Replace("'", "''").Trim();
         }
 
         public virtual string GetDateTimeValue(DateTime dt)

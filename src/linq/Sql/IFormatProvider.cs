@@ -1,5 +1,4 @@
-﻿
-namespace Kiss.Linq.Sql
+﻿namespace Kiss.Linq.Sql
 {
     /// <summary>
     /// Format provider interface generating literals.
@@ -11,19 +10,21 @@ namespace Kiss.Linq.Sql
         /// </summary>
         /// <param name="bucket"></param>
         /// <returns></returns>
-        IFormatProvider Initialize ( IBucket bucket );
+        IFormatProvider Initialize(IBucket bucket);
 
-        string ProcessFormat ( );
-        string GetItemFormat ( );
-        string AddItemFormat ( );
-        string UpdateItemFormat ( );
-        string RemoveItemFormat ( );
+        string ProcessFormat();
+        string GetItemFormat();
+        string AddItemFormat();
+        string UpdateItemFormat();
+        string RemoveItemFormat();
         string BatchAddItemFormat();
         string BatchAddItemValuesFormat();
         string BatchUpdateItemFormat();
         string BatchRemoveItemFormat();
 
-        string DefineString ( string method );
+        string DefineString(string method);
+
+        string Escape(string value);
     }
 
     public enum FormatMethod

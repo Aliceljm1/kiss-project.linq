@@ -105,9 +105,11 @@ namespace Kiss.Linq.Sql.DataBase
             Kiss.QueryObject.OnBatch(typeof(T));
         }
 
-        public IWhere Set(string column, string value)
+        public IWhere Set(string column, object value)
         {
-            set_clauses.Add(string.Format("{0} = '{1}'", column, value));
+            IDataProvider dp = ServiceLocator.Instance.Resolve(conn.Key.ProviderName) as IDataProvider;
+
+            set_clauses.Add(string.Format("{0}={1}", column, (dp.GetFormatProvider(conn.Key.ConnectionString) as TSqlFormatProvider).GetValue(value)));
 
             return this;
         }
