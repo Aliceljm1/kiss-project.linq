@@ -320,17 +320,14 @@ namespace Kiss.Linq.Sql
 
         #region helper
 
-        private void PerformChange(Bucket bucket, IList<QueryObject<T>> items)
+        private void PerformChange(Bucket bucket, List<QueryObject<T>> list)
         {
             DatabaseContext dc = new DatabaseContext(connectionStringSettings.Value, typeof(T));
 
-            // 1，首先尝试批处理该集合
-            List<QueryObject<T>> list = dc.BulkCopy<T>(bucket, items);
-
-            // 2，处理批处理没有处理的数据
+            // 1，首先处理删除和更新
             List<string> sqls = new List<string>();
 
-            foreach (var item in list)
+            foreach (var item in list.FindAll((i) => { return !i.IsNewlyAdded; }))
             {
                 Bucket bkt = item.FillBucket(bucket);
 
@@ -351,6 +348,9 @@ namespace Kiss.Linq.Sql
                     ExecuteOnly(dc, sqls.GetRange(i * 100, Math.Min(sqls.Count - i * 100, 100)).Join(string.Empty));
                 }
             }
+
+            // 2，处理批量添加
+            dc.BulkCopy<T>(bucket, list.FindAll((i) => { return i.IsNewlyAdded; }));
 
             Kiss.QueryObject.OnBatch(typeof(T));
         }

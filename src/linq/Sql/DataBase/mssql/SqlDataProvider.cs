@@ -628,11 +628,9 @@ CREATE TABLE [{0}]
 
         #endregion
 
-        public List<QueryObject<T>> BulkCopy<T>(string connstring, Bucket bucket, IList<QueryObject<T>> items) where T : IQueryObject, new()
+        public void BulkCopy<T>(string connstring, Bucket bucket, List<QueryObject<T>> list) where T : IQueryObject, new()
         {
-            List<QueryObject<T>> list = new List<QueryObject<T>>(items);
-
-            if (items.Count == 0) return list;
+            if (list.Count == 0) return;
 
             DataTable dt = new DataTable(bucket.Name);
             foreach (var item in bucket.Items.Values)
@@ -643,11 +641,8 @@ CREATE TABLE [{0}]
                 dt.Columns.Add(item.Name, t);
             }
 
-            foreach (var item in items)
+            foreach (var item in list)
             {
-                if (!item.IsNewlyAdded)
-                    continue;
-
                 DataRow row = dt.NewRow();
 
                 foreach (var bi in item.FillBucket(bucket).Items.Values)
@@ -663,7 +658,7 @@ CREATE TABLE [{0}]
                 dt.Rows.Add(row);
             }
 
-            if (dt.Rows.Count == 0) return list;
+            if (dt.Rows.Count == 0) return;
 
             using (SqlConnection conn = new SqlConnection(connstring))
             {
@@ -691,9 +686,6 @@ CREATE TABLE [{0}]
                     conn.Close();
                 }
             }
-
-            list.RemoveAll((i) => { return i.IsNewlyAdded; });
-            return list;
         }
     }
 }

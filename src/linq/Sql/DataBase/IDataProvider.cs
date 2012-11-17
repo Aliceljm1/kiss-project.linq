@@ -8,7 +8,7 @@ namespace Kiss.Linq.Sql.DataBase
     /// </summary>
     public interface IDataProvider
     {
-        List<QueryObject<T>> BulkCopy<T>(string connstring, Bucket bucket, IList<QueryObject<T>> items) where T : IQueryObject, new();
+        void BulkCopy<T>(string connstring, Bucket bucket, List<QueryObject<T>> items) where T : IQueryObject, new();
 
         /// <summary>
         /// ExecuteNonQuery

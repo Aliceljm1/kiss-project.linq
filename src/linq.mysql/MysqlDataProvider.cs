@@ -362,20 +362,17 @@ namespace Kiss.Linq.Sql.Mysql
 
         #endregion
 
-        public List<QueryObject<T>> BulkCopy<T>(string connstring, Bucket bucket, IList<QueryObject<T>> items) where T : IQueryObject, new()
+        public void BulkCopy<T>(string connstring, Bucket bucket, List<QueryObject<T>> list) where T : IQueryObject, new()
         {
-            List<QueryObject<T>> list = new List<QueryObject<T>>(items);
-
-            List<QueryObject<T>> newly_list = list.FindAll((i) => { return i.IsNewlyAdded; });
-            if (newly_list.Count == 0) return list;
+            if (list.Count == 0) return;
 
             IFormatProvider fp = GetFormatProvider(connstring);
 
-            string sql_pre = SqlQuery<T>.Translate(newly_list[0].FillBucket(bucket), FormatMethod.BatchAdd, fp);
+            string sql_pre = SqlQuery<T>.Translate(list[0].FillBucket(bucket), FormatMethod.BatchAdd, fp);
 
             List<string> datas = new List<string>();
 
-            foreach (var item in newly_list)
+            foreach (var item in list)
             {
                 datas.Add(SqlQuery<T>.Translate(item.FillBucket(bucket), FormatMethod.BatchAddValues, fp));
             }
@@ -387,9 +384,6 @@ namespace Kiss.Linq.Sql.Mysql
             {
                 ExecuteNonQuery(connstring, sql_pre + datas.GetRange(i * ps, Math.Min(datas.Count - i * ps, ps)).Join(StringUtil.Comma));
             }
-
-            list.RemoveAll((i) => { return i.IsNewlyAdded; });
-            return list;
         }
     }
 }

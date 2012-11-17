@@ -173,13 +173,13 @@ namespace Kiss.Linq.Sql.DataBase
             }
         }
 
-        public List<QueryObject<T>> BulkCopy<T>(Bucket bucket, IList<QueryObject<T>> items) where T : IQueryObject, new()
+        public void BulkCopy<T>(Bucket bucket, List<QueryObject<T>> items) where T : IQueryObject, new()
         {
             logger.Debug("execute bulk copy. total count: {0}", items.Count);
 
             try
             {
-                return dbAccess.BulkCopy<T>(connstring, bucket, items);
+                dbAccess.BulkCopy<T>(connstring, bucket, items);
             }
             catch (Exception ex)
             {
