@@ -218,7 +218,7 @@ namespace Kiss.Linq.Sql
                                  if (builder.Length > 0)
                                      builder.Append(",");
 
-                                 if (item.Value != null)
+                                 if (HasValue(item.Value))
                                  {
                                      string value = GetValue(item.Value);
                                      builder.AppendFormat("{0}{1}{2}", Quote(item.Name), RelationalOperators[item.RelationType], value);
