@@ -341,17 +341,6 @@ namespace Kiss.Linq.Sql
             return count;
         }
 
-        public void Delete(QueryCondition q)
-        {
-            CheckQuery(q, ConnectionStringSettings.Value);
-
-            q.FireBeforeQueryEvent("Delete", ConnectionStringSettings.Value.ProviderName);
-
-            q.Delete();
-
-            Kiss.QueryObject.OnBatch(typeof(T));
-        }
-
         public List<T> GetsAll()
         {
             return GetsAll(CreateContext(true));

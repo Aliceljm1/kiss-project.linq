@@ -172,22 +172,42 @@ namespace Kiss.Linq.Sql.DataBase
         /// <summary>
         /// 根据查询条件获取记录总数
         /// </summary>
-        /// <param name="query"></param>
+        /// <param name="qc"></param>
         /// <returns></returns>
-        public int Count(QueryCondition query)
+        public int Count(QueryCondition qc)
         {
-            string where = query.WhereClause;
+            string where = qc.WhereClause;
 
             string sql = string.Format("Select ISNULL(COUNT({1}),0) FROM {0}",
-                query.TableName,
-                query.TableField.IndexOfAny(new char[] { ',' }) > -1 || query.TableField.Contains(".*") ? "*" : query.TableField);
+                qc.TableName,
+                qc.TableField.IndexOfAny(new char[] { ',' }) > -1 || qc.TableField.Contains(".*") ? "*" : qc.TableField);
 
             if (StringUtil.HasText(where))
                 sql += string.Format(" {0}", where);
 
             logger.Debug(sql);
 
-            object ret = ExecuteScalar(query.ConnectionString, sql);
+            object ret;
+
+            using (SqlConnection conn = new SqlConnection(qc.ConnectionString))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand(sql, (SqlConnection)conn);
+                cmd.CommandType = CommandType.Text;
+
+                if (qc.Parameters.Count > 0)
+                {
+                    foreach (var item in qc.Parameters)
+                    {
+                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                    }
+                }
+
+                ret = cmd.ExecuteScalar();
+
+                conn.Close();
+            }
 
             if (ret == null || ret is DBNull) return 0;
 
@@ -290,28 +310,36 @@ namespace Kiss.Linq.Sql.DataBase
             return sql;
         }
 
-        public DataTable GetDataTable(QueryCondition q)
+        public DataTable GetDataTable(QueryCondition qc)
         {
-            string sql = combin_sql(q);
+            string sql = combin_sql(qc);
 
             logger.Debug(sql);
 
-            return ExecuteDataTable(q.ConnectionString, sql);
-        }
+            DataTable dt = new DataTable();
 
-        public void Delete(QueryCondition query)
-        {
-            string where = query.WhereClause;
+            using (SqlConnection conn = new SqlConnection(qc.ConnectionString))
+            {
+                conn.Open();
 
-            string sql = string.Format("DELETE FROM [{0}]",
-                query.TableName);
+                SqlCommand cmd = new SqlCommand(sql, (SqlConnection)conn);
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = sql;
 
-            if (StringUtil.HasText(where))
-                sql += string.Format(" {0}", where);
+                if (qc.Parameters.Count > 0)
+                {
+                    foreach (var item in qc.Parameters)
+                    {
+                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                    }
+                }
 
-            logger.Debug(sql);
+                SqlDataAdapter da = new SqlDataAdapter((SqlCommand)cmd);
 
-            ExecuteNonQuery(query.ConnectionString, sql);
+                da.Fill(dt);
+            }
+
+            return dt;
         }
 
         #endregion

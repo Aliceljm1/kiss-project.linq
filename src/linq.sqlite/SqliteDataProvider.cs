@@ -151,20 +151,41 @@ namespace Kiss.Linq.Sql.Sqlite
             return li;
         }
 
-        public int Count(QueryCondition q)
+        public int Count(QueryCondition qc)
         {
-            string where = q.WhereClause;
+            string where = qc.WhereClause;
 
             string sql = string.Format("select count({1}) as count from {0}",
-                q.TableName,
-                q.TableField.IndexOfAny(new char[] { ',' }) > -1 || q.TableField.Contains(".*") ? "*" : q.TableField);
+                qc.TableName,
+                qc.TableField.IndexOfAny(new char[] { ',' }) > -1 || qc.TableField.Contains(".*") ? "*" : qc.TableField);
 
             if (StringUtil.HasText(where))
                 sql += string.Format(" {0}", where);
 
             logger.Debug(sql);
 
-            object ret = ExecuteScalar(q.ConnectionString, sql);
+            object ret = 0;
+
+            using (SQLiteConnection conn = new SQLiteConnection(qc.ConnectionString))
+            {
+                conn.Open();
+
+                SQLiteCommand cmd = conn.CreateCommand();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = sql;
+
+                if (qc.Parameters.Count > 0)
+                {
+                    foreach (var item in qc.Parameters)
+                    {
+                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                    }
+                }
+
+                ret = cmd.ExecuteScalar();
+
+                conn.Close();
+            }
 
             if (ret == null || ret is DBNull) return 0;
 
@@ -214,14 +235,14 @@ namespace Kiss.Linq.Sql.Sqlite
             return sql;
         }
 
-        public DataTable GetDataTable(QueryCondition q)
+        public DataTable GetDataTable(QueryCondition qc)
         {
-            string sql = combin_sql(q);
+            string sql = combin_sql(qc);
             logger.Debug(sql);
 
             DataTable dt = new DataTable();
 
-            using (SQLiteConnection conn = new SQLiteConnection(q.ConnectionString))
+            using (SQLiteConnection conn = new SQLiteConnection(qc.ConnectionString))
             {
                 conn.Open();
 
@@ -229,25 +250,19 @@ namespace Kiss.Linq.Sql.Sqlite
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandText = sql;
 
+                if (qc.Parameters.Count > 0)
+                {
+                    foreach (var item in qc.Parameters)
+                    {
+                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                    }
+                }
+
                 SQLiteDataAdapter da = new SQLiteDataAdapter(cmd);
                 da.Fill(dt);
             }
 
             return dt;
-        }
-
-        public void Delete(QueryCondition condition)
-        {
-            string where = condition.WhereClause;
-
-            string sql = string.Format("DELETE FROM {0}", condition.TableName);
-
-            if (StringUtil.HasText(where))
-                sql += string.Format(" {0}", where);
-
-            logger.Debug(sql);
-
-            ExecuteNonQuery(condition.ConnectionString, sql);
         }
 
         #region IDDL Members
