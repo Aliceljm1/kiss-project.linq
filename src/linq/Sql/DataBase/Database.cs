@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Kiss.Linq.Fluent;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using Kiss.Linq.Fluent;
 
 namespace Kiss.Linq.Sql.DataBase
 {

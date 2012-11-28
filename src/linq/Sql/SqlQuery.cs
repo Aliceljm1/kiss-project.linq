@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Kiss.Linq.Fluent;
+using Kiss.Linq.Sql.DataBase;
+using Kiss.Utils;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Reflection;
 using System.Text;
-using Kiss.Linq.Fluent;
-using Kiss.Linq.Sql.DataBase;
-using Kiss.Utils;
 
 namespace Kiss.Linq.Sql
 {
@@ -56,15 +56,7 @@ namespace Kiss.Linq.Sql
 
         public void SubmitChanges(bool batch)
         {
-            Validation.ValidationManager vm = new Validation.ValidationManager<T>();
-
             var queryColleciton = (QueryCollection<T>)this.collection;
-
-            foreach (var item in queryColleciton.Objects)
-            {
-                if (!item.IsDeleted && !vm.IsValid(item.ReferringObject))
-                    throw new Validation.ValidationException(vm.GetValidationErrorContent());
-            }
 
             if (batch)
             {
