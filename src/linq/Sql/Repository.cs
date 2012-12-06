@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Reflection;
-using Kiss.Config;
+﻿using Kiss.Config;
 using Kiss.Linq.Fluent;
 using Kiss.Linq.Sql.DataBase;
 using Kiss.Plugin;
 using Kiss.Query;
 using Kiss.Repository;
 using Kiss.Utils;
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Configuration;
+using System.Data;
+using System.Linq;
+using System.Reflection;
 
 namespace Kiss.Linq.Sql
 {
@@ -293,6 +293,46 @@ namespace Kiss.Linq.Sql
                 return e.Result as DataTable;
 
             DataTable dt = q.GetDataTable();
+
+            if (dt.Columns.Contains("propertyname") && dt.Columns.Contains("propertyvalue"))
+            {
+                Queue<ExtendedAttributes> attrs = new Queue<ExtendedAttributes>();
+                List<string> ext_columns = new List<string>();
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    ExtendedAttributes ext = new ExtendedAttributes();
+                    ext.SetData(row["propertyname"] is DBNull ? string.Empty : Convert.ToString(row["propertyname"])
+                        , row["propertyvalue"] is DBNull ? string.Empty : Convert.ToString(row["propertyvalue"]));
+
+                    attrs.Enqueue(ext);
+
+                    foreach (string key in ext.Keys)
+                    {
+                        if (!ext_columns.Contains(key.ToLower()))
+                            ext_columns.Add(key.ToLower());
+                    }
+                }
+
+                ext_columns.RemoveAll((i) =>
+                {
+                    return dt.Columns.Contains(i);
+                });
+
+                foreach (string ext_column in ext_columns)
+                {
+                    dt.Columns.Add(ext_column);
+                }
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    ExtendedAttributes ext = attrs.Dequeue();
+                    foreach (string ext_column in ext_columns)
+                    {
+                        row[ext_column] = ext[ext_column];
+                    }
+                }
+            }            
 
             Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
             {
