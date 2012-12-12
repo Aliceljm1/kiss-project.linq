@@ -193,7 +193,7 @@ namespace Kiss.Linq.Sql
                        }
                        else
                        {
-                           builder.Append(GetValue(TypeConvertUtil.ConvertTo(string.Empty, item.PropertyType)));
+                           builder.Append("null");
                        }
                    }
                });
