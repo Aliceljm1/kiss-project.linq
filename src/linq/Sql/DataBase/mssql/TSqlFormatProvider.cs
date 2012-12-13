@@ -193,7 +193,10 @@ namespace Kiss.Linq.Sql
                        }
                        else
                        {
-                           builder.Append("null");
+                           if (item.PropertyType == typeof(DateTime))
+                               builder.Append("null");
+                           else
+                               builder.Append("''");
                        }
                    }
                });
