@@ -439,7 +439,7 @@ namespace Kiss.Linq.Sql
                 return dt > DateTime.MinValue && dt < DateTime.MaxValue;
             }
 
-            return obj != null;
+            return obj != null && !(obj is DBNull);
         }
 
         public IDictionary<OperatorType, string> Operators
