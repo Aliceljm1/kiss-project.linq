@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
+using System.Reflection;
 using System.Text;
 
 namespace Kiss.Linq.Sql.Sqlite
@@ -401,6 +402,46 @@ namespace Kiss.Linq.Sql.Sqlite
             }
 
             int ps = 1000;
+
+            int pc = (int)Math.Ceiling(datas.Count / (ps * 1.0));
+            for (int i = 0; i < pc; i++)
+            {
+                ExecuteNonQuery(connstring, sql_pre + datas.GetRange(i * ps, Math.Min(datas.Count - i * ps, ps)).Join(StringUtil.Comma));
+            }
+        }
+
+        public void SaveDataTable(string connstring, DataTable dt)
+        {
+            if (string.IsNullOrEmpty(connstring) || dt == null || string.IsNullOrEmpty(dt.TableName))
+                throw new ArgumentNullException();
+
+            if (dt.Columns.Count == 0 || dt.Rows.Count == 0) return;
+
+            Type type = Type.GetType(dt.TableName);
+
+            if (type == null)
+                throw new ArgumentException(string.Format("type {0} is not found!", dt.TableName));
+
+            IFormatProvider fp = GetFormatProvider(connstring);
+
+            IBucket bucket = new BucketImpl(type).Describe();
+
+            fp.Initialize(bucket);
+
+            Type querytype = typeof(SqlQuery<>).MakeGenericType(type);
+
+            MethodInfo mi = querytype.GetMethod("Translate");
+
+            string sql_pre = mi.Invoke(null, new object[] { bucket, FormatMethod.BatchAdd, fp }) as string;
+
+            List<string> datas = new List<string>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                datas.Add(string.Format("({0})", fp.DefineBatchTobeInsertedValues(row)));
+            }
+
+            int ps = 500;
 
             int pc = (int)Math.Ceiling(datas.Count / (ps * 1.0));
             for (int i = 0; i < pc; i++)

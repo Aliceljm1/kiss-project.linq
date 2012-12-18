@@ -1,4 +1,5 @@
-﻿namespace Kiss.Linq.Sql
+﻿using System.Data;
+namespace Kiss.Linq.Sql
 {
     /// <summary>
     /// Format provider interface generating literals.
@@ -23,6 +24,8 @@
         string BatchRemoveItemFormat();
 
         string DefineString(string method);
+
+        string DefineBatchTobeInsertedValues(DataRow row);
 
         string Escape(string value);
     }

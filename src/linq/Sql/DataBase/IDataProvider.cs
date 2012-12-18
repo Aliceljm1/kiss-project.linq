@@ -10,6 +10,8 @@ namespace Kiss.Linq.Sql.DataBase
     {
         void BulkCopy<T>(string connstring, Bucket bucket, List<QueryObject<T>> items) where T : IQueryObject, new();
 
+        void SaveDataTable(string connstring, DataTable dt);
+
         /// <summary>
         /// ExecuteNonQuery
         /// </summary>

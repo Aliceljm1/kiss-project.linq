@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Kiss.Linq.Fluent;
 using Kiss.Utils;
+using System.Data;
 
 namespace Kiss.Linq.Sql
 {
@@ -190,6 +191,37 @@ namespace Kiss.Linq.Sql
                        if (HasValue(item.Value))
                        {
                            builder.Append(GetValue(item.Value));
+                       }
+                       else
+                       {
+                           if (item.PropertyType == typeof(DateTime))
+                               builder.Append("null");
+                           else
+                               builder.Append("''");
+                       }
+                   }
+               });
+
+            return builder.ToString();
+        }
+
+        public string DefineBatchTobeInsertedValues(DataRow row)
+        {
+            StringBuilder builder = new StringBuilder();
+
+            FluentBucket.As(bucket).For.EachItem
+               .Process(delegate(BucketItem item)
+               {
+                   if (!item.Unique || !(item.FindAttribute(typeof(PKAttribute)) as PKAttribute).AutoGen)
+                   {
+                       if (builder.Length > 0)
+                           builder.Append(",");
+
+                       object value = row[item.Name];
+
+                       if (HasValue(value))
+                       {
+                           builder.Append(GetValue(value));
                        }
                        else
                        {

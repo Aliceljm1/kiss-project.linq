@@ -715,5 +715,58 @@ CREATE TABLE [{0}]
                 }
             }
         }
+
+        public void SaveDataTable(string connstring, DataTable dt)
+        {
+            if (string.IsNullOrEmpty(connstring) || dt == null || string.IsNullOrEmpty(dt.TableName))
+                throw new ArgumentNullException();
+
+            if (dt.Columns.Count == 0 || dt.Rows.Count == 0) return;
+
+            Type type = Type.GetType(dt.TableName);
+
+            if (type == null)
+                throw new ArgumentException(string.Format("type {0} is not found!", dt.TableName));
+
+            IBucket bucket = new BucketImpl(type).Describe();
+
+            using (SqlConnection conn = new SqlConnection(connstring))
+            {
+                SqlBulkCopy bulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, null);
+
+                foreach (DataColumn column in dt.Columns)
+                {
+                    string descColumnName = column.ColumnName;
+
+                    foreach (string item in bucket.Items.Keys)
+                    {
+                        if (string.Equals(item, column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            descColumnName = item;
+                            break;
+                        }
+                    }
+
+                    bulkCopy.ColumnMappings.Add(column.ColumnName, descColumnName);
+                }
+
+                bulkCopy.DestinationTableName = bucket.Name;
+                bulkCopy.BatchSize = dt.Rows.Count;
+
+                try
+                {
+                    conn.Open();
+
+                    bulkCopy.WriteToServer(dt);
+                }
+                finally
+                {
+                    if (bulkCopy != null)
+                        bulkCopy.Close();
+
+                    conn.Close();
+                }
+            }
+        }
     }
 }
