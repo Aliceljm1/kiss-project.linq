@@ -736,7 +736,7 @@ CREATE TABLE [{0}]
 
                 foreach (DataColumn column in dt.Columns)
                 {
-                    string descColumnName = column.ColumnName;
+                    string descColumnName = string.Empty;
 
                     foreach (string item in bucket.Items.Keys)
                     {
@@ -747,11 +747,12 @@ CREATE TABLE [{0}]
                         }
                     }
 
-                    bulkCopy.ColumnMappings.Add(column.ColumnName, descColumnName);
+                    if (!string.IsNullOrEmpty(descColumnName))
+                        bulkCopy.ColumnMappings.Add(column.ColumnName, descColumnName);
                 }
 
                 bulkCopy.DestinationTableName = bucket.Name;
-                bulkCopy.BatchSize = dt.Rows.Count;
+                bulkCopy.BatchSize = 10000;
 
                 try
                 {
