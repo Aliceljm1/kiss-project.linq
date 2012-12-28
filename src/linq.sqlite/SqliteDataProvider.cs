@@ -177,9 +177,13 @@ namespace Kiss.Linq.Sql.Sqlite
 
                 if (qc.Parameters.Count > 0)
                 {
+                    SqliteFormatProvider fp = new SqliteFormatProvider();
                     foreach (var item in qc.Parameters)
                     {
-                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                        if (item.Value is DateTime)
+                            cmd.Parameters.AddWithValue(item.Key, fp.GetDateTimeValue((DateTime)item.Value));
+                        else
+                            cmd.Parameters.AddWithValue(item.Key, item.Value);
                     }
                 }
 
@@ -253,9 +257,13 @@ namespace Kiss.Linq.Sql.Sqlite
 
                 if (qc.Parameters.Count > 0)
                 {
+                    SqliteFormatProvider fp = new SqliteFormatProvider();
                     foreach (var item in qc.Parameters)
                     {
-                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                        if (item.Value is DateTime)
+                            cmd.Parameters.AddWithValue(item.Key, fp.GetDateTimeValue((DateTime)item.Value));
+                        else
+                            cmd.Parameters.AddWithValue(item.Key, item.Value);
                     }
                 }
 

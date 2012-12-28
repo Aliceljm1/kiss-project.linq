@@ -276,7 +276,7 @@ namespace Kiss.Linq.Sql.DataBase
                         query.PageSize * query.PageIndex,
                         query.PageSize * (query.PageIndex + 1) + 1,
                         where,
-                        string.IsNullOrEmpty(query["pk"]) ? "Id" : query["pk"],
+                        query["pk"] == null ? "Id" : query["pk"],
                         join);
                 }
                 else
