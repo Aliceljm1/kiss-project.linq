@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Kiss.Utils;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Text;
-using Kiss.Utils;
 
 namespace Kiss.Linq.Sql.DataBase
 {
@@ -116,7 +116,20 @@ namespace Kiss.Linq.Sql.DataBase
 
         public IWhere Where(string where, params object[] args)
         {
-            where_clauses.Add(string.Format(where, args));
+            IDataProvider dp = ServiceLocator.Instance.Resolve(conn.Key.ProviderName) as IDataProvider;
+
+            TSqlFormatProvider fp = (dp.GetFormatProvider(conn.Key.ConnectionString) as TSqlFormatProvider);
+
+            List<string> list = new List<string>();
+
+            foreach (var item in args)
+            {
+                list.Add(fp.GetValue(item));
+            }
+
+            where = where.Replace("'{", "{").Replace("}'", "}");
+
+            where_clauses.Add(string.Format(where, list));
 
             return this;
         }
