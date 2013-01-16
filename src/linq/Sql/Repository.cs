@@ -282,6 +282,11 @@ namespace Kiss.Linq.Sql
 
             string sql = string.Concat(q.WhereClause, q.PageIndex, q.PageSize, q.TotalCount, q.OrderByClause, q.TableField);
 
+            foreach (var item in q.Parameters)
+            {
+                sql += item.Value;
+            }
+
             Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
             {
                 Type = typeof(T),
@@ -332,7 +337,7 @@ namespace Kiss.Linq.Sql
                         row[ext_column] = ext[ext_column];
                     }
                 }
-            }            
+            }
 
             Kiss.QueryObject.OnAfterQuery(new Kiss.QueryObject.QueryEventArgs()
             {
@@ -358,6 +363,11 @@ namespace Kiss.Linq.Sql
             q.FireBeforeQueryEvent("Count", ConnectionStringSettings.Key.ProviderName);
 
             string sql = "count" + q.WhereClause;
+
+            foreach (var item in q.Parameters)
+            {
+                sql += item.Value;
+            }
 
             Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
             {

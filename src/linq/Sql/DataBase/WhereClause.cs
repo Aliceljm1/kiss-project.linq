@@ -129,7 +129,7 @@ namespace Kiss.Linq.Sql.DataBase
 
             where = where.Replace("'{", "{").Replace("}'", "}");
 
-            where_clauses.Add(string.Format(where, list));
+            where_clauses.Add(string.Format(where, list.ToArray()));
 
             return this;
         }
