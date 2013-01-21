@@ -217,7 +217,9 @@ namespace Kiss.Linq.Sql
                        if (builder.Length > 0)
                            builder.Append(",");
 
-                       object value = row[item.Name];
+                       object value = null;
+                       if (row.Table.Columns.Contains(item.Name))
+                           value = row[item.Name];
 
                        if (HasValue(value))
                        {
@@ -225,7 +227,7 @@ namespace Kiss.Linq.Sql
                        }
                        else
                        {
-                           if (item.PropertyType == typeof(DateTime))
+                           if (item.PropertyType == typeof(DateTime) || Nullable.GetUnderlyingType(item.PropertyType) == typeof(DateTime))
                                builder.Append("null");
                            else
                                builder.Append("''");
