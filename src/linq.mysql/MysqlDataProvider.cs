@@ -326,7 +326,7 @@ namespace Kiss.Linq.Sql.Mysql
 
             createBuilder.Remove(createBuilder.Length - 2, 2);
 
-            return string.Format(@"CREATE TABLE `{0}` ({1})",
+            return string.Format(@"CREATE TABLE `{0}` ({1});",
                 fluentBucket.Entity.Name,
                 createBuilder.ToString());
         }

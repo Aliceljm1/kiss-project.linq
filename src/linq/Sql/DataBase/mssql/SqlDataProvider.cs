@@ -519,7 +519,7 @@ namespace Kiss.Linq.Sql.DataBase
 @"CONSTRAINT [{0}] PRIMARY KEY CLUSTERED
 (
   {1} 
-)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]",
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY];",
                                         "PK_" + fluentBucket.Entity.Name,
                                         primaryKeyList.ToString());
             }
@@ -539,7 +539,7 @@ CREATE TABLE [{0}]
 
         public string GenAddColumnSql(string tablename, string columnname, Type columntype)
         {
-            return string.Format("ALTER TABLE {0} ADD [{1}] {2}\n",
+            return string.Format("ALTER TABLE {0} ADD [{1}] {2};",
                             tablename,
                             columnname,
                             GetDbType(columntype));
@@ -738,11 +738,11 @@ CREATE TABLE [{0}]
                 {
                     string descColumnName = string.Empty;
 
-                    foreach (string item in bucket.Items.Keys)
+                    foreach (var item in bucket.Items)
                     {
-                        if (string.Equals(item, column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                        if (string.Equals(item.Value.Name, column.ColumnName, StringComparison.InvariantCultureIgnoreCase))
                         {
-                            descColumnName = item;
+                            descColumnName = item.Value.Name;
                             break;
                         }
                     }
