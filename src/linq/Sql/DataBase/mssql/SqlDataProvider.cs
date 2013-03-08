@@ -519,7 +519,7 @@ namespace Kiss.Linq.Sql.DataBase
 @"CONSTRAINT [{0}] PRIMARY KEY CLUSTERED
 (
   {1} 
-)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY];",
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]",
                                         "PK_" + fluentBucket.Entity.Name,
                                         primaryKeyList.ToString());
             }
