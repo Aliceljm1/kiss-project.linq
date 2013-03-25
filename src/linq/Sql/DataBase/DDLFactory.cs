@@ -16,41 +16,52 @@ namespace Kiss.Linq.Sql.DataBase
             if (ddl == null)
                 return;
 
-            string key = objtype.Name + css.Name;
-
-            if (!ddl_status.Contains(key))
+            if (string.IsNullOrEmpty(css.Name))
+                DDL(ddl, objtype, css, null);
+            else
             {
-                lock (_lock)
+                string key = objtype.Name + css.Name;
+
+                if (!ddl_status.Contains(key))
                 {
-                    if (!ddl_status.Contains(key))
+                    lock (_lock)
                     {
-                        try
+                        if (!ddl_status.Contains(key))
                         {
-                            Database db = new Database(ddl, css.ConnectionString);
-
-                            StringBuilder sql = new StringBuilder();
-
-                            // get db's table and column
-                            db.Fill();
-
-                            sql.Append(db.GenerateSql(objtype));
-
-                            // execute sql
-                            db.Execute(sql.ToString());
-
-                            LogManager.GetLogger<DDLFactory>().Info("sync table schema of {0} ok.", objtype.Name);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogManager.GetLogger<DDLFactory>().Fatal(ex.Message);
-                        }
-                        finally
-                        {
-                            if (!ddl_status.Contains(key))
-                                ddl_status.Add(key);
+                            DDL(ddl, objtype, css, key);
                         }
                     }
                 }
+            }
+        }
+
+        private static void DDL(IDDL ddl, Type objtype, ConnectionStringSettings css, string key)
+        {
+            try
+            {
+                Database db = new Database(ddl, css.ConnectionString);
+
+                StringBuilder sql = new StringBuilder();
+
+                // get db's table and column
+                db.Fill();
+
+                sql.Append(db.GenerateSql(objtype));
+
+                // execute sql
+                db.Execute(sql.ToString());
+
+                LogManager.GetLogger<DDLFactory>().Info("sync table schema of {0} ok.", objtype.Name);
+            }
+            catch (Exception ex)
+            {
+                LogManager.GetLogger<DDLFactory>().Fatal(ex.Message);
+            }
+            finally
+            {
+                if (!string.IsNullOrEmpty(css.Name))
+                    if (!ddl_status.Contains(key))
+                        ddl_status.Add(key);
             }
         }
     }

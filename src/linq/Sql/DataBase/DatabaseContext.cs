@@ -42,7 +42,7 @@ namespace Kiss.Linq.Sql.DataBase
                 if (ddlconfig == null)
                     return;
 
-                if (is_ddlallowed(StringUtil.Split(ddlconfig["auto_tables"], StringUtil.Comma, true, true), Kiss.QueryObject.GetTableName(modelType)))
+                if (string.IsNullOrEmpty(connectionStringSettings.Name) || is_ddlallowed(StringUtil.Split(ddlconfig["auto_tables"], StringUtil.Comma, true, true), Kiss.QueryObject.GetTableName(modelType)))
                     DDLFactory.Sync(dbAccess as IDDL, modelType, connectionStringSettings);
             }
             catch (Exception ex)
