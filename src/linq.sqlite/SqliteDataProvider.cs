@@ -197,13 +197,32 @@ namespace Kiss.Linq.Sql.Sqlite
             return Convert.ToInt32(ret);
         }
 
-        public IDataReader GetReader(QueryCondition condition)
+        public IDataReader GetReader(QueryCondition qc)
         {
-            string sql = combin_sql(condition);
+            string sql = combin_sql(qc);
 
             logger.Debug(sql);
 
-            return ExecuteReader(condition.ConnectionString, sql);
+            SQLiteConnection conn = new SQLiteConnection(qc.ConnectionString);
+            conn.Open();
+
+            SQLiteCommand cmd = conn.CreateCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandText = sql;
+
+            if (qc.Parameters.Count > 0)
+            {
+                SqliteFormatProvider fp = new SqliteFormatProvider();
+                foreach (var item in qc.Parameters)
+                {
+                    if (item.Value is DateTime)
+                        cmd.Parameters.AddWithValue(item.Key, fp.GetDateTimeValue((DateTime)item.Value));
+                    else
+                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                }
+            }
+
+            return cmd.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
         public IDbTransaction BeginTransaction(string connectionstring, IsolationLevel isolationLevel)

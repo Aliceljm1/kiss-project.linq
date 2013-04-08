@@ -217,16 +217,30 @@ namespace Kiss.Linq.Sql.DataBase
         /// <summary>
         /// get IDataReader from query condition
         /// </summary>
-        /// <param name="query"></param>
+        /// <param name="qc"></param>
         /// <returns></returns>
-        public IDataReader GetReader(QueryCondition query)
+        public IDataReader GetReader(QueryCondition qc)
         {
-            string sql = combin_sql(query);
+            string sql = combin_sql(qc);
 
             logger.Debug(sql);
 
-            return ExecuteReader(query.ConnectionString,
-                    sql);
+            SqlConnection conn = new SqlConnection(qc.ConnectionString);
+            conn.Open();
+
+            SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandText = sql;
+
+            if (qc.Parameters.Count > 0)
+            {
+                foreach (var item in qc.Parameters)
+                {
+                    cmd.Parameters.AddWithValue(item.Key, item.Value);
+                }
+            }
+
+            return cmd.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
         public IDbTransaction BeginTransaction(string connectionstring, IsolationLevel isolationLevel)

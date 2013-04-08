@@ -193,13 +193,28 @@ namespace Kiss.Linq.Sql.Mysql
             return Convert.ToInt32(ret);
         }
 
-        public IDataReader GetReader(QueryCondition condition)
+        public IDataReader GetReader(QueryCondition qc)
         {
-            string sql = combin_sql(condition);
+            string sql = combin_sql(qc);
 
             logger.Debug(sql);
 
-            return ExecuteReader(condition.ConnectionString, sql);
+            MySqlConnection conn = new MySqlConnection(qc.ConnectionString);
+            conn.Open();
+
+            MySqlCommand cmd = conn.CreateCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandText = sql;
+
+            if (qc.Parameters.Count > 0)
+            {
+                foreach (var item in qc.Parameters)
+                {
+                    cmd.Parameters.AddWithValue(item.Key, item.Value);
+                }
+            }
+
+            return cmd.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
         public IDbTransaction BeginTransaction(string connectionstring, IsolationLevel isolationLevel)
