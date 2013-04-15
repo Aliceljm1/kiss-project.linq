@@ -428,7 +428,7 @@ namespace Kiss.Linq.Sql.Sqlite
                 datas.Add(SqlQuery<T>.Translate(item.FillBucket(bucket), FormatMethod.BatchAddValues, fp));
             }
 
-            int ps = 1000;
+            int ps = 500;
 
             int pc = (int)Math.Ceiling(datas.Count / (ps * 1.0));
             for (int i = 0; i < pc; i++)
