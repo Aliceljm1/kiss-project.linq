@@ -179,6 +179,22 @@ namespace Kiss.Linq.Sql.DataBase
             return value;
         }
 
+        public List<t> Selects<t>(string field)
+        {
+            if (string.IsNullOrEmpty(field)) return new List<t>();
+
+            List<t> list = new List<t>();
+
+            DataTable dt = Select(field);
+
+            foreach (DataRow row in dt.Rows)
+            {
+                list.Add(TypeConvertUtil.ConvertTo<t>(row[field]));
+            }
+
+            return list;
+        }
+
         public DataTable Select(params string[] fields)
         {
             StringBuilder sql = new StringBuilder();
