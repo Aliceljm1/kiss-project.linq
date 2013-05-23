@@ -503,7 +503,7 @@ namespace Kiss.Linq.Sql.DataBase
                 return bucketItem.Unique;
             }).Process(delegate(BucketItem bucketItem)
             {
-                createBuilder.Append(GenerateDeclaration(bucketItem));
+                createBuilder.Append(GenerateColumnDeclaration(bucketItem));
                 createBuilder.Append(",\n");
 
                 hasPrimaryKey = true;
@@ -516,7 +516,7 @@ namespace Kiss.Linq.Sql.DataBase
                 return !bucketItem.Unique;
             }).Process(delegate(BucketItem bucketItem)
             {
-                createBuilder.Append(GenerateDeclaration(bucketItem));
+                createBuilder.Append(GenerateColumnDeclaration(bucketItem));
                 createBuilder.Append(",\n");
             });
 
@@ -551,48 +551,65 @@ CREATE TABLE [{0}]
                param);
         }
 
-        public string GenAddColumnSql(string tablename, string columnname, Type columntype)
+        public string GenAlterTableSql(IBucket bucket, BucketItem item)
         {
-            return string.Format("ALTER TABLE {0} ADD [{1}] {2};",
-                            tablename,
-                            columnname,
-                            GetDbType(columntype));
+            return string.Format("ALTER TABLE [{0}] ADD {1};",
+                                  bucket.Name,
+                                  GenerateColumnDeclaration(item));
         }
 
-        public string GenChangeColumnSql(string tablename, string columnname, Type columntype, string oldtype)
+        public string GenerateColumnDeclaration(BucketItem item)
         {
-            return string.Empty;
-        }
+            bool isPk = item.FindAttribute(typeof(PKAttribute)) != null;
 
-        private string GenerateDeclaration(BucketItem item)
-        {
-            string sql = string.Empty;
-
-            sql += string.Format("[{0}] {1}", item.Name, GetDbType(item.PropertyType));
-
-            if (item.FindAttribute(typeof(PKAttribute)) != null)
-                sql += string.Format(" NOT NULL {0}", item.PropertyType == typeof(int) ? "IDENTITY(1,1)" : string.Empty);
-
-            return sql;
-        }
-
-        public string GetDbType(Type type)
-        {
-            switch (type.FullName)
+            int maxLength = 500;
+            if (isPk)
             {
-                case "System.String":
-                    return "nvarchar(2000)";
-                case "System.DateTime":
-                    return "datetime";
-                case "System.Int32":
-                    return "int";
-                case "System.Boolean":
-                    return "bit";
-                case "System.Int64":
-                    return "bigint";
-                default:
-                    return "nvarchar(2000)";
+                maxLength = 50;
             }
+            else if (item.PropertyType.FullName == "System.String")
+            {
+                Validation.LengthAttribute lengthAttr = item.FindAttribute(typeof(Validation.LengthAttribute)) as Validation.LengthAttribute;
+
+                if (lengthAttr != null)
+                    maxLength = (int)lengthAttr.MaxLength;
+            }
+
+            StringBuilder column = new StringBuilder();
+            column.AppendFormat("[{0}] ", item.Name);
+
+            switch (item.PropertyType.FullName)
+            {
+                case "System.DateTime":
+                    column.Append("datetime");
+                    break;
+                case "System.Int32":
+                    column.Append("int");
+                    break;
+                case "System.Boolean":
+                    column.Append("bit");
+                    break;
+                case "System.Int64":
+                    column.Append("bigint");
+                    break;
+                case "System.Decimal":
+                    column.Append("decimal(18,1)");
+                    break;
+                case "System.String":
+                    if (maxLength > 4000)
+                        column.Append("TEXT");
+                    else
+                        column.AppendFormat("NVARCHAR({0})", maxLength);
+                    break;
+                default:
+                    column.AppendFormat("nvarchar({0})", maxLength);
+                    break;
+            }
+
+            if (isPk)
+                column.AppendFormat(" NOT NULL {0}", item.PropertyType == typeof(int) ? "IDENTITY(1,1)" : string.Empty);
+
+            return column.ToString();
         }
 
         #region sql

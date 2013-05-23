@@ -326,7 +326,7 @@ namespace Kiss.Linq.Sql.Mysql
 
             fluentBucket.For.EachItem.Process(delegate(BucketItem bucketItem)
             {
-                createBuilder.Append(GenerateDeclaration(bucketItem));
+                createBuilder.Append(GenerateColumnDeclaration(bucketItem));
                 createBuilder.Append(",\n");
             });
 
@@ -346,49 +346,66 @@ namespace Kiss.Linq.Sql.Mysql
                 createBuilder.ToString());
         }
 
-        public string GenAddColumnSql(string tablename, string columnname, Type columntype)
+        public string GenAlterTableSql(IBucket bucket, BucketItem item)
         {
-            return string.Format("ALTER TABLE `{0}` ADD `{1}` {2};",
-                            tablename,
-                            columnname,
-                            GetDbType(columntype));
+            return string.Format("ALTER TABLE `{0}` ADD {1};",
+                                  bucket.Name,
+                                  GenerateColumnDeclaration(item));
         }
 
-        public string GenChangeColumnSql(string tablename, string columnname, Type columntype, string oldtype)
+        public string GenerateColumnDeclaration(BucketItem item)
         {
-            return string.Empty;
-        }
+            bool isPk = item.FindAttribute(typeof(PKAttribute)) != null;
 
-        public string GetDbType(Type type)
-        {
-            switch (type.FullName)
+            int maxLength = 500;
+            if (isPk)
             {
-                case "System.String":
-                    return "VARCHAR(200)";
+                maxLength = 50;
+            }
+            else if (item.PropertyType.FullName == "System.String")
+            {
+                Validation.LengthAttribute lengthAttr = item.FindAttribute(typeof(Validation.LengthAttribute)) as Validation.LengthAttribute;
+
+                if (lengthAttr != null)
+                    maxLength = (int)lengthAttr.MaxLength;
+            }
+
+            StringBuilder column = new StringBuilder();
+            column.AppendFormat("`{0}` ", item.Name);
+
+            switch (item.PropertyType.FullName)
+            {
                 case "System.DateTime":
-                    return "DATETIME";
+                    column.Append("DATETIME");
+                    break;
                 case "System.Int32":
-                    return "int";
+                    column.Append("INT");
+                    break;
                 case "System.Boolean":
-                    return "BIT";
+                    column.Append("BIT");
+                    break;
                 case "System.Int64":
-                    return "BIGINT";
+                    column.Append("BIGINT");
+                    break;
+                case "System.Decimal":
+                    column.Append("DECIMAL(10,1)");
+                    break;
+                case "System.String":
+                    if (maxLength > 4000)
+                        column.Append("TEXT");
+                    else
+                        column.AppendFormat("NVARCHAR({0})", maxLength);
+                    break;
                 default:
-                    return "VARCHAR(200)";
+                    column.AppendFormat("NVARCHAR({0})", maxLength);
+                    break;
             }
-        }
 
-        private string GenerateDeclaration(BucketItem item)
-        {
-            if (item.FindAttribute(typeof(PKAttribute)) != null)
-            {
-                if (item.PropertyType == typeof(int))
-                    return string.Format("`{0}` int NOT NULL AUTO_INCREMENT", item.Name);
-                else
-                    return string.Format("`{0}` VARCHAR(50) NOT NULL", item.Name);
-            }
-            else
-                return string.Format("`{0}` {1}", item.Name, GetDbType(item.PropertyType));
+            if (isPk)
+                column.AppendFormat(" NOT NULL {0}",
+                    item.PropertyType == typeof(int) ? "AUTO_INCREMENT" : string.Empty);
+
+            return column.ToString();
         }
 
         #endregion

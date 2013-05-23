@@ -10,9 +10,7 @@ namespace Kiss.Linq.Sql.DataBase
         void Execute(Database db, string sql);
 
         string GenAddTableSql(IBucket bucket);
-        string GenAddColumnSql(string tablename, string columnname, Type columntype);
-        string GenChangeColumnSql(string tablename, string columnname, Type columntype, string oldtype);
-
-        string GetDbType(Type type);
+        string GenAlterTableSql(IBucket bucket, BucketItem item);
+        string GenerateColumnDeclaration(BucketItem item);
     }
 }

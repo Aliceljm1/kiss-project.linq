@@ -64,10 +64,8 @@ namespace Kiss.Linq.Sql.DataBase
 
                     // if column not exist , generate add column sql
                     if (column == null)
-                        sb.Append(ddl.GenAddColumnSql(bucket.Name, bucketItem.Name, bucketItem.PropertyType));
-                    // if column type changed, generate modify column sql
-                    else
-                        sb.Append(ddl.GenChangeColumnSql(bucket.Name, bucketItem.Name, bucketItem.PropertyType, column.Type));
+                        sb.Append(ddl.GenAlterTableSql(bucket, bucketItem));
+                    // if column type changed, do nothing now                  
                 });
 
                 return sb.ToString();
