@@ -575,25 +575,27 @@ CREATE TABLE [{0}]
                     maxLength = (int)lengthAttr.MaxLength;
             }
 
+            bool notNull = item.FindAttribute(typeof(Validation.NotNullAttribute)) as Validation.NotNullAttribute != null;
+
             StringBuilder column = new StringBuilder();
             column.AppendFormat("[{0}] ", item.Name);
 
             switch (item.PropertyType.FullName)
             {
                 case "System.DateTime":
-                    column.Append("datetime");
+                    column.Append("DATETIME");
                     break;
                 case "System.Int32":
-                    column.Append("int");
+                    column.Append("INT");
                     break;
                 case "System.Boolean":
-                    column.Append("bit");
+                    column.Append("BIT");
                     break;
                 case "System.Int64":
-                    column.Append("bigint");
+                    column.Append("BIGINT");
                     break;
                 case "System.Decimal":
-                    column.Append("decimal(18,1)");
+                    column.Append("DECIMAL(18,1)");
                     break;
                 case "System.String":
                     if (maxLength > 4000)
@@ -602,12 +604,14 @@ CREATE TABLE [{0}]
                         column.AppendFormat("NVARCHAR({0})", maxLength);
                     break;
                 default:
-                    column.AppendFormat("nvarchar({0})", maxLength);
+                    column.AppendFormat("NVARCHAR({0})", maxLength);
                     break;
             }
 
             if (isPk)
                 column.AppendFormat(" NOT NULL {0}", item.PropertyType == typeof(int) ? "IDENTITY(1,1)" : string.Empty);
+            else if (notNull)
+                column.AppendFormat(" NOT NULL DEFAULT ''");
 
             return column.ToString();
         }

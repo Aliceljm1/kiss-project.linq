@@ -390,6 +390,8 @@ namespace Kiss.Linq.Sql.Sqlite
                     maxLength = (int)lengthAttr.MaxLength;
             }
 
+            bool notNull = item.FindAttribute(typeof(Validation.NotNullAttribute)) as Validation.NotNullAttribute != null;
+
             StringBuilder column = new StringBuilder();
             column.AppendFormat("[{0}] ", item.Name);
 
@@ -427,6 +429,8 @@ namespace Kiss.Linq.Sql.Sqlite
             if (isPk)
                 column.AppendFormat(" NOT NULL PRIMARY KEY {0}",
                     item.PropertyType == typeof(int) ? " AUTOINCREMENT" : string.Empty);
+            else if(notNull)
+                column.AppendFormat(" NOT NULL DEFAULT ''");
 
             return column.ToString();
         }
