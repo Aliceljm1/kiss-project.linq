@@ -219,7 +219,7 @@ namespace Kiss.Linq.Sql
             if (q.PageSize == -1)
                 q.PageSize = 20;
 
-            string sql = string.Concat(q.WhereClause, q.PageIndex, q.PageSize, q.TotalCount, q.OrderByClause, q.TableField);
+            string sql = string.Concat(q.TableName, q.WhereClause, q.PageIndex, q.PageSize, q.TotalCount, q.OrderByClause, q.TableField);
 
             Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
             {
@@ -280,7 +280,7 @@ namespace Kiss.Linq.Sql
             if (q.PageSize == -1)
                 q.PageSize = 20;
 
-            string sql = string.Concat(q.WhereClause, q.PageIndex, q.PageSize, q.TotalCount, q.OrderByClause, q.TableField);
+            string sql = string.Concat(q.TableName, q.WhereClause, q.PageIndex, q.PageSize, q.TotalCount, q.OrderByClause, q.TableField);
 
             foreach (var item in q.Parameters)
             {
@@ -362,7 +362,7 @@ namespace Kiss.Linq.Sql
 
             q.FireBeforeQueryEvent("Count", ConnectionStringSettings.Key.ProviderName);
 
-            string sql = "count" + q.WhereClause;
+            string sql = "count" + q.WhereClause + q.TableName;
 
             foreach (var item in q.Parameters)
             {
