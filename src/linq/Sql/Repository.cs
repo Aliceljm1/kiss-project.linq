@@ -220,6 +220,10 @@ namespace Kiss.Linq.Sql
                 q.PageSize = 20;
 
             string sql = string.Concat(q.TableName, q.WhereClause, q.PageIndex, q.PageSize, q.TotalCount, q.OrderByClause, q.TableField);
+            foreach (var item in q.Parameters)
+            {
+                sql += item.Value;
+            }
 
             Kiss.QueryObject.QueryEventArgs e = new Kiss.QueryObject.QueryEventArgs()
             {

@@ -370,7 +370,7 @@ namespace Kiss.Linq.Sql.Mysql
                     maxLength = (int)lengthAttr.MaxLength;
             }
 
-            bool notNull = item.FindAttribute(typeof(Validation.NotNullAttribute)) as Validation.NotNullAttribute != null;
+            Validation.NotNullAttribute notnullattr = item.FindAttribute(typeof(Validation.NotNullAttribute)) as Validation.NotNullAttribute;
 
             StringBuilder column = new StringBuilder();
             column.AppendFormat("`{0}` ", item.Name);
@@ -406,8 +406,8 @@ namespace Kiss.Linq.Sql.Mysql
             if (isPk)
                 column.AppendFormat(" NOT NULL {0}",
                     item.PropertyType == typeof(int) ? "AUTO_INCREMENT" : string.Empty);
-            else if(notNull)
-                column.AppendFormat(" NOT NULL DEFAULT ''");
+            else if (notnullattr != null)
+                column.AppendFormat(" NOT NULL DEFAULT {0}", new MysqlFormatProvider().GetValue(notnullattr.DefaultValue));
 
             return column.ToString();
         }

@@ -109,7 +109,7 @@ namespace Kiss.Linq.Sql.DataBase
         {
             IDataProvider dp = ServiceLocator.Instance.Resolve(conn.Key.ProviderName) as IDataProvider;
 
-            set_clauses.Add(string.Format("{0}={1}", column, (dp.GetFormatProvider(conn.Key.ConnectionString) as TSqlFormatProvider).GetValue(value)));
+            set_clauses.Add(string.Format("{0}={1}", column, dp.GetFormatProvider(conn.Key.ConnectionString).GetValue(value)));
 
             return this;
         }
@@ -118,7 +118,7 @@ namespace Kiss.Linq.Sql.DataBase
         {
             IDataProvider dp = ServiceLocator.Instance.Resolve(conn.Key.ProviderName) as IDataProvider;
 
-            TSqlFormatProvider fp = (dp.GetFormatProvider(conn.Key.ConnectionString) as TSqlFormatProvider);
+            IFormatProvider fp = dp.GetFormatProvider(conn.Key.ConnectionString);
 
             List<string> list = new List<string>();
 

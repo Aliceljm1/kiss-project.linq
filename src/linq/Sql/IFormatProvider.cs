@@ -27,6 +27,7 @@ namespace Kiss.Linq.Sql
 
         string DefineBatchTobeInsertedValues(DataRow row);
 
+        string GetValue(object obj);
         string Escape(string value);
     }
 
