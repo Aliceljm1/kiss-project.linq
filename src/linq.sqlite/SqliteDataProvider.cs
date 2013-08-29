@@ -4,6 +4,7 @@ using Kiss.Query;
 using Kiss.Utils;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
@@ -395,7 +396,15 @@ namespace Kiss.Linq.Sql.Sqlite
             StringBuilder column = new StringBuilder();
             column.AppendFormat("[{0}] ", item.Name);
 
-            switch (item.PropertyType.FullName)
+            Type propertyType = item.PropertyType;
+
+            if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+            {
+                NullableConverter nc = new NullableConverter(propertyType);
+                propertyType = nc.UnderlyingType;
+            }
+
+            switch (propertyType.FullName)
             {
                 case "System.DateTime":
                     column.Append("DATETIME");

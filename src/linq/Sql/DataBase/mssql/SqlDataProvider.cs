@@ -3,6 +3,7 @@ using Kiss.Query;
 using Kiss.Utils;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
@@ -560,6 +561,8 @@ CREATE TABLE [{0}]
 
         public string GenerateColumnDeclaration(BucketItem item)
         {
+            //item.DeclaringObjectType
+
             bool isPk = item.FindAttribute(typeof(PKAttribute)) != null;
 
             int maxLength = 500;
@@ -580,7 +583,15 @@ CREATE TABLE [{0}]
             StringBuilder column = new StringBuilder();
             column.AppendFormat("[{0}] ", item.Name);
 
-            switch (item.PropertyType.FullName)
+            Type propertyType = item.PropertyType;
+
+            if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+            {
+                NullableConverter nc = new NullableConverter(propertyType);
+                propertyType = nc.UnderlyingType;
+            }
+
+            switch (propertyType.FullName)
             {
                 case "System.DateTime":
                     column.Append("DATETIME");
