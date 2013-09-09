@@ -417,6 +417,8 @@ namespace Kiss.Linq.Sql
 
             if (obj is DateTime)
                 value = GetDateTimeValue(Convert.ToDateTime(obj));
+            else if (obj is UInt64)
+                return obj.ToString();
             else
                 value = Convert.ToString(obj);
 
