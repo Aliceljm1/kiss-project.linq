@@ -1,16 +1,18 @@
-﻿using System;
+﻿using Kiss.Linq.Fluent;
+using Kiss.Utils;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
-using Kiss.Linq.Fluent;
-using Kiss.Utils;
-using System.Data;
 
 namespace Kiss.Linq.Sql
 {
     public class TSqlFormatProvider : IFormatProvider
-    {
+    { 
         private static readonly object _sync = new object();
+
+        private readonly string[] Types = new string[] { "Int16", "Int32", "Int64", "UInt16", "UInt32", "UInt64", "Decimal", "Double" };
 
         protected IBucket bucket;
 
@@ -403,9 +405,9 @@ namespace Kiss.Linq.Sql
             if (obj == null)
                 obj = string.Empty;
 
-            if (obj is int)
+            if (Types.Contains(obj.GetType().Name))
                 return obj.ToString();
-
+             
             if (obj is bool)
                 return (Convert.ToBoolean(obj) ? 1 : 0).ToString();
 
@@ -417,8 +419,6 @@ namespace Kiss.Linq.Sql
 
             if (obj is DateTime)
                 value = GetDateTimeValue(Convert.ToDateTime(obj));
-            else if (obj is UInt64)
-                return obj.ToString();
             else
                 value = Convert.ToString(obj);
 
