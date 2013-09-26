@@ -706,6 +706,8 @@ CREATE TABLE [{0}]
         {
             if (list.Count == 0) return;
 
+            Dictionary<string, object> columns_default_value = new Dictionary<string, object>();
+
             DataTable dt = new DataTable(bucket.Name);
             foreach (var item in bucket.Items.Values)
             {
@@ -713,6 +715,10 @@ CREATE TABLE [{0}]
                 if (Nullable.GetUnderlyingType(item.PropertyType) != null)
                     t = Nullable.GetUnderlyingType(item.PropertyType);
                 dt.Columns.Add(item.Name, t);
+
+                Validation.NotNullAttribute notnullattr = item.FindAttribute(typeof(Validation.NotNullAttribute)) as Validation.NotNullAttribute;
+                if (notnullattr != null)
+                    columns_default_value[item.Name] = notnullattr.DefaultValue;
             }
 
             foreach (var item in list)
@@ -727,6 +733,10 @@ CREATE TABLE [{0}]
                         row[bi.Name] = DBNull.Value;
                     else
                         row[bi.Name] = bi.Value;
+
+                    // 如果值为null，则尝试从默认值中获取
+                    if (row[bi.Name] == DBNull.Value && columns_default_value.ContainsKey(bi.Name))
+                        row[bi.Name] = columns_default_value[bi.Name];
                 }
 
                 dt.Rows.Add(row);

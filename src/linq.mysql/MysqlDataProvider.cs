@@ -157,7 +157,7 @@ namespace Kiss.Linq.Sql.Mysql
         {
             string where = qc.WhereClause;
 
-            string sql = string.Format("select count({1}) as count from `{0}`",
+            string sql = string.Format("select count({1}) as count from {0}",
                 qc.TableName,
                 qc.TableField.IndexOfAny(new char[] { ',' }) > -1 || qc.TableField.Contains(".*") ? "*" : qc.TableField);
 
