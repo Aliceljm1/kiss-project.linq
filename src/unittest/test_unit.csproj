@@ -92,6 +92,9 @@
   <ItemGroup>
     <None Include="App.config">
     </None>
+    <None Include="kiss.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\linq.mysql\linq.mysql.csproj">
