@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
+using Kiss.Linq.Sql.DataBase;
 using NUnit.Framework;
+using Oracle.DataAccess.Client;
+//using System.Data.OracleClient;
 
 namespace Kiss.Linq.Linq2Sql.Test
 {
@@ -20,65 +25,99 @@ namespace Kiss.Linq.Linq2Sql.Test
             DeleteAll();
         }
 
-        [SetUp]
-        public void Setup()
+        [Test]
+        public void TestConnection() 
         {
-            var libraryContext = Library.CreateContext(false);
-            var bookContext = Book.CreateContext(false);
+            IDataProvider dp = ServiceLocator.Instance.Resolve(Book.ConnectionStringSettings.Key.ProviderName) as IDataProvider;
+            string sql="select *from user_tables";
+            Assert.AreNotEqual(dp.ExecuteNonQuery(Book.ConnectionStringSettings.Key.ConnectionString,sql),0);
+        }
 
-            Library library = new Library { Floor = "1A", Section = "Technology" };
-            libraryContext.Add(library);
-            libraryContext.SubmitChanges();
+        [Test]
+        public void TestConnectionWithString() 
+        {
+            int ret = 0;
+            string connstring = "Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.0.125)(PORT=1521))" +
+              "(CONNECT_DATA=(SID=test)));User Id=system;Password=ahjc1234;";
+           
+            string connstring2 = "Direct=true;User Id=system;Password=ahjc1234;Data Source=192.168.0.125/AHJC;SID=test;Port=1521;";
 
-            for (int index = 0; index < 2; index++)
+            string connstring3 = "User Id=system;Password=ahjc1234;Data Source=192.168.0.125:1521/AHJC;";
+            string sql = "select *from user_tables";
+            using (DbConnection conn = new  OracleConnection(connstring))
             {
-                var shelveContext = Shelve.CreateContext(false);
+                   conn.Open();
+                DbCommand command = conn.CreateCommand();
+                command.CommandType = CommandType.Text;
+                command.CommandText = sql;
 
-                Shelve shelve = new Shelve
-                {
-                    Column = index,
-                    Row = index + 1,
-                    ShelveNo = Guid.NewGuid().ToString(),
-                    LibradyId = library.Id
-                };
+                ret = command.ExecuteNonQuery();
 
-                shelveContext.Add(shelve);
-                shelves.Add(shelve);
-
-                shelveContext.SubmitChanges();
-
-                Assert.IsTrue(shelves[index].Id > 0);
+                conn.Close();
             }
 
-
-            Book book1 = new Book();
-            book1.Title = "Introducing Microsoft LINQ";
-            book1.Author = "Paolo Pialorsi";
-            book1.ISBN = "111-000-1";
-            book1.ShelveId = shelves[0].Id;
-            book1.LastUpdated = DateTime.Parse("2007/1/1");
-
-            bookContext.Add(book1);
-
-            books.Add(book1);
-
-            Book book2 = new Book();
-            book2.Title = "Foundations of F# (Expert's Voice in .Net)";
-            book2.Author = "Robert Pickering";
-            book2.ISBN = "111-000-2";
-            book1.ShelveId = shelves[1].Id;
-            book2.LastUpdated = DateTime.Parse("2007/5/1");
-
-            bookContext.Add(book2);
-
-            books.Add(book2);
-
-            bookContext.SubmitChanges();
-
-            Assert.IsTrue(books[0].Id > 0);
-            Assert.IsTrue(books[1].Id > 0);
-
+            Assert.AreNotEqual(ret,0);
         }
+
+        //[SetUp]
+        //public void Setup()
+        //{
+        //    var libraryContext = Library.CreateContext(false);
+        //    var bookContext = Book.CreateContext(false);
+
+        //    Library library = new Library { Floor = "1A", Section = "Technology" };
+        //    libraryContext.Add(library);
+        //    libraryContext.SubmitChanges();
+
+        //    for (int index = 0; index < 2; index++)
+        //    {
+        //        var shelveContext = Shelve.CreateContext(false);
+
+        //        Shelve shelve = new Shelve
+        //        {
+        //            Column = index,
+        //            Row = index + 1,
+        //            ShelveNo = Guid.NewGuid().ToString(),
+        //            LibradyId = library.Id
+        //        };
+
+        //        shelveContext.Add(shelve);
+        //        shelves.Add(shelve);
+
+        //        shelveContext.SubmitChanges();
+
+        //        Assert.IsTrue(shelves[index].Id > 0);
+        //    }
+
+
+        //    Book book1 = new Book();
+        //    book1.Title = "Introducing Microsoft LINQ";
+        //    book1.Author = "Paolo Pialorsi";
+        //    book1.ISBN = "111-000-1";
+        //    book1.ShelveId = shelves[0].Id;
+        //    book1.LastUpdated = DateTime.Parse("2007/1/1");
+
+        //    bookContext.Add(book1);
+
+        //    books.Add(book1);
+
+        //    Book book2 = new Book();
+        //    book2.Title = "Foundations of F# (Expert's Voice in .Net)";
+        //    book2.Author = "Robert Pickering";
+        //    book2.ISBN = "111-000-2";
+        //    book1.ShelveId = shelves[1].Id;
+        //    book2.LastUpdated = DateTime.Parse("2007/5/1");
+
+        //    bookContext.Add(book2);
+
+        //    books.Add(book2);
+
+        //    bookContext.SubmitChanges();
+
+        //    Assert.IsTrue(books[0].Id > 0);
+        //    Assert.IsTrue(books[1].Id > 0);
+
+        //}
 
         //[Test]
         //public void TestJoin()
@@ -596,43 +635,43 @@ namespace Kiss.Linq.Linq2Sql.Test
         //    Assert.AreEqual( true, query.SingleOrDefault().Author == "cofd" );
         //}
 
-        [TearDown]
-        public void Destroy()
-        {
-            books.Clear();
-            shelves.Clear();
-            DeleteAll();
-        }
+        //[TearDown]
+        //public void Destroy()
+        //{
+        //    books.Clear();
+        //    shelves.Clear();
+        //    DeleteAll();
+        //}
         private void DeleteAll()
         {
-            var bookContext = Book.CreateContext(false);
+            //var bookContext = Book.CreateContext(false);
 
-            var query = from q in bookContext
-                        select q;
+            //var query = from q in bookContext
+            //            select q;
 
-            foreach (var book in query)
-                bookContext.Remove(book);
+            //foreach (var book in query)
+            //    bookContext.Remove(book);
 
-            bookContext.SubmitChanges();
+            //bookContext.SubmitChanges();
 
-            var shelveContext = Shelve.CreateContext(false);
+            //var shelveContext = Shelve.CreateContext(false);
 
-            var shelveQuery = from q in shelveContext
-                              select q;
+            //var shelveQuery = from q in shelveContext
+            //                  select q;
 
-            foreach (var shelve in shelveQuery)
-                shelveContext.Remove(shelve);
+            //foreach (var shelve in shelveQuery)
+            //    shelveContext.Remove(shelve);
 
-            shelveContext.SubmitChanges();
+            //shelveContext.SubmitChanges();
 
-            var libraryContext = Library.CreateContext(false);
-            var libQuery = from q in libraryContext
-                           select q;
+            //var libraryContext = Library.CreateContext(false);
+            //var libQuery = from q in libraryContext
+            //               select q;
 
-            foreach (var library in libQuery)
-                libraryContext.Remove(library);
+            //foreach (var library in libQuery)
+            //    libraryContext.Remove(library);
 
-            libraryContext.SubmitChanges();
+            //libraryContext.SubmitChanges();
         }
 
         #region IDisposable Members
