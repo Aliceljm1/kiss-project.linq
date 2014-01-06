@@ -7,7 +7,6 @@ using System.Linq;
 using Kiss.Linq.Sql.DataBase;
 using NUnit.Framework;
 using Oracle.DataAccess.Client;
-//using System.Data.OracleClient;
 
 namespace Kiss.Linq.Linq2Sql.Test
 {
@@ -37,16 +36,12 @@ namespace Kiss.Linq.Linq2Sql.Test
         public void TestConnectionWithString() 
         {
             int ret = 0;
-            string connstring = "Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.0.125)(PORT=1521))" +
-              "(CONNECT_DATA=(SID=test)));User Id=system;Password=ahjc1234;";
-           
-            string connstring2 = "Direct=true;User Id=system;Password=ahjc1234;Data Source=192.168.0.125/AHJC;SID=test;Port=1521;";
+            string connstring = "Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.0.125)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=AHJC)));User Id=system;Password=ahjc1234;";
 
-            string connstring3 = "User Id=system;Password=ahjc1234;Data Source=192.168.0.125:1521/AHJC;";
             string sql = "select *from user_tables";
             using (DbConnection conn = new  OracleConnection(connstring))
             {
-                   conn.Open();
+                conn.Open();
                 DbCommand command = conn.CreateCommand();
                 command.CommandType = CommandType.Text;
                 command.CommandText = sql;
