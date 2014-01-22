@@ -199,7 +199,14 @@ namespace Kiss.Linq.Sql
                            if (item.PropertyType == typeof(DateTime))
                                builder.Append("null");
                            else
-                               builder.Append("''");
+                           {
+                               // 获取NotNull属性中配置的默认值
+                               Validation.NotNullAttribute notnullattr = item.FindAttribute(typeof(Validation.NotNullAttribute)) as Validation.NotNullAttribute;
+                               if (notnullattr != null && notnullattr.DefaultValue != null)
+                                   builder.AppendFormat(GetValue(notnullattr.DefaultValue));
+                               else
+                                   builder.Append("''");
+                           }
                        }
                    }
                });
@@ -232,7 +239,14 @@ namespace Kiss.Linq.Sql
                            if (item.PropertyType == typeof(DateTime) || Nullable.GetUnderlyingType(item.PropertyType) == typeof(DateTime))
                                builder.Append("null");
                            else
-                               builder.Append("''");
+                           {
+                               // 获取NotNull属性中配置的默认值
+                               Validation.NotNullAttribute notnullattr = item.FindAttribute(typeof(Validation.NotNullAttribute)) as Validation.NotNullAttribute;
+                               if (notnullattr != null && notnullattr.DefaultValue != null)
+                                   builder.AppendFormat(GetValue(notnullattr.DefaultValue));
+                               else
+                                   builder.Append("''");
+                           }
                        }
                    }
                });
