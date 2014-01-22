@@ -2,7 +2,6 @@
 using Kiss.Linq.Sql.DataBase;
 using Kiss.Query;
 using Kiss.Utils;
-using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,17 +9,20 @@ using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Text;
+using Oracle.DataAccess.Client;
+using Kiss.Linq.Sql.Oracle;
+
 
 namespace Kiss.Linq.Sql.Mysql
 {
-    [DbProvider(ProviderName = "System.Data.Mysql")]
-    public class MysqlDataProvider : IDataProvider, Kiss.Query.IQuery, IDDL
+    [DbProvider(ProviderName = "System.Data.Oracle")]
+    public class OracleDataProvider : IDataProvider, Kiss.Query.IQuery, IDDL
     {
         public int ExecuteNonQuery(string connstring, string sql)
         {
             int ret = 0;
 
-            using (DbConnection conn = new MySqlConnection(connstring))
+            using (DbConnection conn = new OracleConnection(connstring))
             {
                 conn.Open();
 
@@ -50,7 +52,7 @@ namespace Kiss.Linq.Sql.Mysql
         {
             object ret = 0;
 
-            using (DbConnection conn = new MySqlConnection(connstring))
+            using (DbConnection conn = new OracleConnection(connstring))
             {
                 conn.Open();
 
@@ -78,7 +80,7 @@ namespace Kiss.Linq.Sql.Mysql
 
         public IDataReader ExecuteReader(string connstring, string sql)
         {
-            DbConnection conn = new MySqlConnection(connstring);
+            DbConnection conn = new OracleConnection(connstring);
             conn.Open();
 
             DbCommand command = conn.CreateCommand();
@@ -102,15 +104,15 @@ namespace Kiss.Linq.Sql.Mysql
         {
             DataTable dt = new DataTable();
 
-            using (DbConnection conn = new MySqlConnection(connstring))
+            using (DbConnection conn = new OracleConnection(connstring))
             {
                 conn.Open();
 
-                DbCommand command = new MySqlCommand(sql, (MySqlConnection)conn);
+                DbCommand command = new OracleCommand(sql, (OracleConnection)conn);
                 command.CommandType = CommandType.Text;
                 command.CommandText = sql;
 
-                MySqlDataAdapter da = new MySqlDataAdapter((MySqlCommand)command);
+                OracleDataAdapter da = new OracleDataAdapter((OracleCommand)command);
 
                 da.Fill(dt);
             }
@@ -122,21 +124,21 @@ namespace Kiss.Linq.Sql.Mysql
         {
             DataTable dt = new DataTable();
 
-            IDbCommand command = new MySqlCommand(sql, (MySqlConnection)tran.Connection);
+            IDbCommand command = new OracleCommand(sql, (OracleConnection)tran.Connection);
             command.CommandType = CommandType.Text;
             command.CommandText = sql;
             command.Transaction = tran;
 
-            MySqlDataAdapter da = new MySqlDataAdapter((MySqlCommand)command);
+            OracleDataAdapter da = new OracleDataAdapter((OracleCommand)command);
 
             da.Fill(dt);
 
             return dt;
         }
 
-        public IFormatProvider GetFormatProvider(string connstring) { return new MysqlFormatProvider(); }
+        public IFormatProvider GetFormatProvider(string connstring) { return new OracleFormatProvider(); }
 
-        private static readonly ILogger logger = LogManager.GetLogger(typeof(MysqlDataProvider));
+        private static readonly ILogger logger = LogManager.GetLogger(typeof(OracleDataAdapter));
 
         public List<T> GetRelationIds<T>(QueryCondition condition)
         {
@@ -168,11 +170,11 @@ namespace Kiss.Linq.Sql.Mysql
 
             object ret = 0;
 
-            using (MySqlConnection conn = new MySqlConnection(qc.ConnectionString))
+            using (OracleConnection conn = new OracleConnection(qc.ConnectionString))
             {
                 conn.Open();
 
-                MySqlCommand cmd = conn.CreateCommand();
+                OracleCommand cmd = conn.CreateCommand();
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandText = sql;
 
@@ -180,7 +182,7 @@ namespace Kiss.Linq.Sql.Mysql
                 {
                     foreach (var item in qc.Parameters)
                     {
-                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                        cmd.Parameters.Add(item.Key,item.Value);
                     }
                 }
 
@@ -200,10 +202,10 @@ namespace Kiss.Linq.Sql.Mysql
 
             logger.Debug(sql);
 
-            MySqlConnection conn = new MySqlConnection(qc.ConnectionString);
+            OracleConnection conn = new OracleConnection(qc.ConnectionString);
             conn.Open();
 
-            MySqlCommand cmd = conn.CreateCommand();
+            OracleCommand cmd = conn.CreateCommand();
             cmd.CommandType = CommandType.Text;
             cmd.CommandText = sql;
 
@@ -211,7 +213,7 @@ namespace Kiss.Linq.Sql.Mysql
             {
                 foreach (var item in qc.Parameters)
                 {
-                    cmd.Parameters.AddWithValue(item.Key, item.Value);
+                   //***** cmd.Parameters.AddWithValue(item.Key, item.Value);
                 }
             }
 
@@ -220,7 +222,7 @@ namespace Kiss.Linq.Sql.Mysql
 
         public IDbTransaction BeginTransaction(string connectionstring, IsolationLevel isolationLevel)
         {
-            MySqlConnection connection = new MySqlConnection(connectionstring);
+            OracleConnection connection = new OracleConnection(connectionstring);
             connection.Open();
 
             return connection.BeginTransaction(isolationLevel);
@@ -255,11 +257,11 @@ namespace Kiss.Linq.Sql.Mysql
 
             DataTable dt = new DataTable();
 
-            using (MySqlConnection conn = new MySqlConnection(qc.ConnectionString))
+            using (OracleConnection conn = new OracleConnection(qc.ConnectionString))
             {
                 conn.Open();
 
-                MySqlCommand cmd = conn.CreateCommand();
+                OracleCommand cmd = conn.CreateCommand();
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandText = sql;
 
@@ -267,11 +269,11 @@ namespace Kiss.Linq.Sql.Mysql
                 {
                     foreach (var item in qc.Parameters)
                     {
-                        cmd.Parameters.AddWithValue(item.Key, item.Value);
+                        //*****cmd.Parameters.AddWithValue(item.Key, item.Value);
                     }
                 }
 
-                MySqlDataAdapter da = new MySqlDataAdapter(cmd);
+                OracleDataAdapter da = new OracleDataAdapter(cmd);
                 da.Fill(dt);
             }
 
@@ -286,7 +288,7 @@ namespace Kiss.Linq.Sql.Mysql
 
         public void Fill(Database db)
         {
-            using (MySqlConnection conn = new MySqlConnection(db.Connectionstring))
+            using (OracleConnection conn = new OracleConnection(db.Connectionstring))
             {
                 conn.Open();
 
@@ -416,7 +418,7 @@ namespace Kiss.Linq.Sql.Mysql
                 column.AppendFormat(" NOT NULL {0}",
                     item.PropertyType == typeof(int) ? "AUTO_INCREMENT" : string.Empty);
             else if (notnullattr != null)
-                column.AppendFormat(" NOT NULL DEFAULT {0}", new MysqlFormatProvider().GetValue(notnullattr.DefaultValue));
+                column.AppendFormat(" NOT NULL DEFAULT {0}", new OracleFormatProvider().GetValue(notnullattr.DefaultValue));
 
             return column.ToString();
         }
