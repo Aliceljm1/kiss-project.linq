@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Kiss.Utils;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Kiss.Utils;
 
 namespace Kiss.Linq
 {
