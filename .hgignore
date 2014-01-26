@@ -6,3 +6,4 @@ glob:*.user
 glob:src/ConsoleApplication2
 syntax: glob
 *.docstates
+src/unittest/db.db3

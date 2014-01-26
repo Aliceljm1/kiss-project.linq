@@ -182,7 +182,7 @@ namespace Kiss.Linq.Sql.Mysql
                 {
                     foreach (var item in qc.Parameters)
                     {
-                        cmd.Parameters.Add(item.Key,item.Value);
+                        cmd.Parameters.Add(item.Key, item.Value);
                     }
                 }
 
@@ -213,7 +213,7 @@ namespace Kiss.Linq.Sql.Mysql
             {
                 foreach (var item in qc.Parameters)
                 {
-                   //***** cmd.Parameters.AddWithValue(item.Key, item.Value);
+                    //***** cmd.Parameters.AddWithValue(item.Key, item.Value);
                 }
             }
 
@@ -286,6 +286,10 @@ namespace Kiss.Linq.Sql.Mysql
         {
         }
 
+        /// <summary>
+        /// 获取数据库 schema，
+        /// </summary>
+        /// <param name="db"></param>
         public void Fill(Database db)
         {
             using (OracleConnection conn = new OracleConnection(db.Connectionstring))
@@ -296,7 +300,7 @@ namespace Kiss.Linq.Sql.Mysql
 
                 foreach (DataRow row in dt.Rows)
                 {
-                    string type = row["DATA_TYPE"].ToString();
+                    string type = row["DATATYPE"].ToString();
                     if (StringUtil.IsNullOrEmpty(type))
                         continue;
 
@@ -324,7 +328,6 @@ namespace Kiss.Linq.Sql.Mysql
         public string GenAddTableSql(IBucket bucket)
         {
             StringBuilder createBuilder = new StringBuilder();
-
             FluentBucket fluentBucket = FluentBucket.As(bucket);
 
             fluentBucket.For.EachItem.Process(delegate(BucketItem bucketItem)
@@ -338,20 +341,22 @@ namespace Kiss.Linq.Sql.Mysql
                 return bucketItem.Unique;
             }).Process(delegate(BucketItem bucketItem)
             {
-                createBuilder.AppendFormat("CONSTRAINT `PK_{0}` PRIMARY KEY (`{1}`)", bucket.Name, bucketItem.Name);
+                createBuilder.AppendFormat("CONSTRAINT {0}_PK PRIMARY KEY ({1})", bucket.Name, bucketItem.Name);
                 createBuilder.Append(",\n");
             });
 
             createBuilder.Remove(createBuilder.Length - 2, 2);
 
-            return string.Format(@"CREATE TABLE `{0}` ({1});",
+            string sql = string.Format(@"CREATE TABLE {0} ({1})",
                 fluentBucket.Entity.Name,
                 createBuilder.ToString());
+            LogManager.GetLogger<OracleDataProvider>().Info("GenAddTableSql：{0}", sql);
+            return sql;
         }
 
         public string GenAlterTableSql(IBucket bucket, BucketItem item)
         {
-            return string.Format("ALTER TABLE `{0}` ADD {1};",
+            return string.Format("ALTER TABLE {0} ADD {1}",
                                   bucket.Name,
                                   GenerateColumnDeclaration(item));
         }
@@ -376,7 +381,7 @@ namespace Kiss.Linq.Sql.Mysql
             Validation.NotNullAttribute notnullattr = item.FindAttribute(typeof(Validation.NotNullAttribute)) as Validation.NotNullAttribute;
 
             StringBuilder column = new StringBuilder();
-            column.AppendFormat("`{0}` ", item.Name);
+            column.AppendFormat("{0} ", item.Name);
 
             Type propertyType = item.PropertyType;
 
@@ -389,36 +394,37 @@ namespace Kiss.Linq.Sql.Mysql
             switch (propertyType.FullName)
             {
                 case "System.DateTime":
-                    column.Append("DATETIME");
+                    column.Append("DATE");
                     break;
                 case "System.Int32":
-                    column.Append("INT");
+                    column.Append("NUMBER(10)");
                     break;
                 case "System.Boolean":
-                    column.Append("BIT");
+                    column.Append("CHAR(1)");//true=1,false=0
                     break;
                 case "System.Int64":
-                    column.Append("BIGINT");
+                    column.Append("NUMBER(19)");
                     break;
                 case "System.Decimal":
-                    column.Append("DECIMAL(10,1)");
+                    column.Append("NUMBER(10,2)");//默认两位小数
                     break;
                 case "System.String":
                     if (maxLength > 4000)
-                        column.Append("TEXT");
+                        column.Append("CLOB");//最长4G
                     else
-                        column.AppendFormat("NVARCHAR({0})", maxLength);
+                        column.AppendFormat("VARCHAR2({0})", maxLength);
                     break;
                 default:
-                    column.AppendFormat("NVARCHAR({0})", maxLength);
+                    column.AppendFormat("VARCHAR2({0})", maxLength);
                     break;
             }
 
             if (isPk)
-                column.AppendFormat(" NOT NULL {0}",
-                    item.PropertyType == typeof(int) ? "AUTO_INCREMENT" : string.Empty);
+            {
+                StringBuilder strb = (item.PropertyType == typeof(int)) ? column.Append(" generated  always as identity") : column.Append("not null");
+            }
             else if (notnullattr != null)
-                column.AppendFormat(" NOT NULL DEFAULT {0}", new OracleFormatProvider().GetValue(notnullattr.DefaultValue));
+                column.AppendFormat("  default {0} not null", new OracleFormatProvider().GetValue(notnullattr.DefaultValue));
 
             return column.ToString();
         }

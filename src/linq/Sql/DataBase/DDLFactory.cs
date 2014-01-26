@@ -55,7 +55,7 @@ namespace Kiss.Linq.Sql.DataBase
             }
             catch (Exception ex)
             {
-                LogManager.GetLogger<DDLFactory>().Fatal(ex.Message);
+                LogManager.GetLogger<DDLFactory>().Fatal("Try to sync Model: "+objtype.Name+" schema ERROR："+ex.Message);
             }
             finally
             {

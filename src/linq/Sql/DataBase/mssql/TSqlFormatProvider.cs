@@ -81,7 +81,7 @@ namespace Kiss.Linq.Sql
             return @"(${TobeBatchInsertedValues})";
         }
 
-        public string UpdateItemFormat()
+        public virtual string UpdateItemFormat()
         {
             return @"Update ${Entity} SET ${UpdateItems} WHERE ${UniqueWhere}; SELECT * FROM ${Entity} Where ${UniqueWhere}";
         }

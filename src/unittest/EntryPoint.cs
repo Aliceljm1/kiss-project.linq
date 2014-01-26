@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.IO;
 using System.Linq;
+using Kiss.Config;
 using Kiss.Linq.Sql.DataBase;
 using NUnit.Framework;
 using Oracle.DataAccess.Client;
@@ -26,19 +28,38 @@ namespace Kiss.Linq.Linq2Sql.Test
 
         [Test]
         public void TestConnection() 
-        {
-            IDataProvider dp = ServiceLocator.Instance.Resolve(Book.ConnectionStringSettings.Key.ProviderName) as IDataProvider;
-            string sql="select *from user_tables";
-            Assert.AreNotEqual(dp.ExecuteNonQuery(Book.ConnectionStringSettings.Key.ConnectionString,sql),0);
+        {//主键自增长
+            ILinqContext<Library>cxl= Library.CreateContext(false);
+            Library li = new Library() { Floor="就是flooe",Section="sss的马甲"};
+            cxl.Add(li,true);
+            cxl.SubmitChanges();
+
+            List<Library> list = Library.GetsAll();
+            if (list.Count > 0) {
+                LogManager.GetLogger<EntryPoint>().Info("Library 有行{0}", list.Count);
+            }
+
+            //var cx =  BookType.CreateContext(false);
+            //BookType bt = new BookType { Id=Kiss.Utils.StringUtil.UniqueId(),TypeName="数学类",TypeNum=12.3M};
+            //cx.Add(bt, true);
+            //cx.SubmitChanges();
+            //BookType BT2 = BookType.Get(bt.Id);
+            //if(BT2!=null)
+            //    LogManager.GetLogger<EntryPoint>().Info("insert a Booktype is  ok.{0}", BT2.TypeName);
         }
 
         [Test]
         public void TestConnectionWithString() 
         {
             int ret = 0;
-            string connstring = "Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.0.125)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=AHJC)));User Id=system;Password=ahjc1234;";
+            string connstring = "Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=pdborcl)));User Id=system;Password=admin1234;";
 
-            string sql = "select *from user_tables";
+            string sql = @"select *from user_tables;";
+            sql = getSqlString();
+//            string sql = @"begin 
+//create sequence TABLE22_SEQ;
+//create table table22(id NUMBER DEFAULT 1);
+//end;";
             using (DbConnection conn = new  OracleConnection(connstring))
             {
                 conn.Open();
@@ -52,6 +73,11 @@ namespace Kiss.Linq.Linq2Sql.Test
             }
 
             Assert.AreNotEqual(ret,0);
+        }
+
+        private string getSqlString()
+        {
+            return File.ReadAllText(@"d:\sql.txt");
         }
 
         //[SetUp]
@@ -659,14 +685,14 @@ namespace Kiss.Linq.Linq2Sql.Test
 
             //shelveContext.SubmitChanges();
 
-            //var libraryContext = Library.CreateContext(false);
-            //var libQuery = from q in libraryContext
+            //var cx = Library.CreateContext(false);
+            //var libQuery = from q in cx
             //               select q;
 
             //foreach (var library in libQuery)
-            //    libraryContext.Remove(library);
+            //    cx.Remove(library);
 
-            //libraryContext.SubmitChanges();
+            //cx.SubmitChanges();
         }
 
         #region IDisposable Members

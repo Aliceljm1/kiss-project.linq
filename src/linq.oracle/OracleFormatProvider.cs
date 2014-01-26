@@ -11,7 +11,7 @@ namespace Kiss.Linq.Sql.Oracle
         {
             get
             {
-                return '`';
+                return ' ';
             }
         }
 
@@ -19,8 +19,22 @@ namespace Kiss.Linq.Sql.Oracle
         {
             get
             {
-                return '`';
+                return ' ';
             }
+        }
+
+        /// <summary>
+        /// oracle 执行多条语句需要使用begin，end;
+        /// </summary>
+        /// <returns></returns>
+        public override string AddItemFormat()
+        {
+            return @"Declare ct integer; begin INSERT INTO ${Entity} ( ${TobeInsertedFields} ) VALUES (${TobeInsertedValues}); SELECT count(*) into ct  FROM ${Entity} ${AfterInsertWhere}; end;";
+        }
+
+        public override string UpdateItemFormat()
+        {
+            return @"Declare ct integer; begin Update ${Entity} SET ${UpdateItems} WHERE ${UniqueWhere}; SELECT count(*) into ct FROM ${Entity} Where ${UniqueWhere}; end;";
         }
 
         public override string Escape(string value)
@@ -32,7 +46,7 @@ namespace Kiss.Linq.Sql.Oracle
         {
             get
             {
-                return "last_insert_id()";
+                return "last_insert_id()";//mysql 获取自动增长字段最新值
             }
         }
 
@@ -44,6 +58,12 @@ namespace Kiss.Linq.Sql.Oracle
             }
 
             return "Select * from ${Entity} ${Where} ${OrderBy}";
+        }
+
+        public override string DefineAfterInsertWhere()
+        {
+            string value = string.Empty;
+            return value;
         }
 
         public override string DefinePageLength()
