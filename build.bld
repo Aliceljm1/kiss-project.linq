@@ -1,0 +1,298 @@
+<?xml version='1.0' encoding='utf-8'?>
+<project version='7' encrypted='1'>
+	<steps type='0'>
+		<step action='Read File'>
+			<FailNoMatch type='11'>-1</FailNoMatch>
+			<FileIn>%PROJDIR%\src\linq\Properties\CommonAssemblyInfo.cs</FileIn>
+			<Find>\d+\.\d+</Find>
+			<Log type='11'>-1</Log>
+			<Macro>VERSION</Macro>
+			<NoModS type='11'>-1</NoModS>
+			<name>Read version</name>
+		</step>
+		<step action='Copy Files'>
+			<Converted type='11'>-1</Converted>
+			<Delay>15</Delay>
+			<DestDir>%PROJDIR%\lib</DestDir>
+			<Ext>Kiss.dll</Ext>
+			<Incremental type='11'>-1</Incremental>
+			<LogCopied type='11'>-1</LogCopied>
+			<ReadOnly type='11'>-1</ReadOnly>
+			<Retries>10</Retries>
+			<SourceDir>e:\kiss\build\%VERSION%\</SourceDir>
+			<TBD type='11'>-1</TBD>
+			<name>prepare lib</name>
+		</step>
+		<step action='Make VS.NET'>
+			<Attr type='11'>-1</Attr>
+			<Config>Release|Any CPU</Config>
+			<FileVer type='11'>-1</FileVer>
+			<Filename>%PROJDIR%\linq.sln</Filename>
+			<Force type='3'>1</Force>
+			<name>Make VS.NET</name>
+		</step>
+		<step action='Copy Files'>
+			<Converted type='11'>-1</Converted>
+			<Delay>15</Delay>
+			<DestDir>e:\kiss\build\%VERSION%\</DestDir>
+			<ExclExt>*.pdb</ExclExt>
+			<Ext>Kiss.Linq.*</Ext>
+			<Incremental type='11'>-1</Incremental>
+			<LogCopied type='11'>-1</LogCopied>
+			<ReadOnly type='11'>-1</ReadOnly>
+			<Retries>10</Retries>
+			<SourceDir>%PROJDIR%\src\linq\bin\Release</SourceDir>
+			<TBD type='11'>-1</TBD>
+			<name>linq</name>
+		</step>
+		<step action='Copy Files'>
+			<Converted type='11'>-1</Converted>
+			<Delay>15</Delay>
+			<DestDir>e:\kiss\build\%VERSION%\</DestDir>
+			<ExclExt>*.pdb</ExclExt>
+			<Ext><![CDATA[Kiss.Linq.Sqlite.dll
+sqlite3.dll
+System.Data.SQLite.DLL]]></Ext>
+			<Incremental type='11'>-1</Incremental>
+			<LogCopied type='11'>-1</LogCopied>
+			<ReadOnly type='11'>-1</ReadOnly>
+			<Retries>10</Retries>
+			<SourceDir>%PROJDIR%\src\linq.sqlite\bin\Release</SourceDir>
+			<TBD type='11'>-1</TBD>
+			<name>sqlite</name>
+		</step>
+		<step action='Copy Files'>
+			<Converted type='11'>-1</Converted>
+			<Delay>15</Delay>
+			<DestDir>e:\kiss\build\%VERSION%\</DestDir>
+			<ExclExt>*.pdb</ExclExt>
+			<Ext><![CDATA[Kiss.Linq.Mysql.dll
+mysql.data.dll]]></Ext>
+			<Incremental type='11'>-1</Incremental>
+			<LogCopied type='11'>-1</LogCopied>
+			<ReadOnly type='11'>-1</ReadOnly>
+			<Retries>10</Retries>
+			<SourceDir>%PROJDIR%\src\linq.mysql\bin\Release</SourceDir>
+			<TBD type='11'>-1</TBD>
+			<name>mysql</name>
+		</step></steps>
+	<steps type='2'>
+		<step action='Group'>
+			<condcomparison type='3'>6</condcomparison>
+			<condexpr><![CDATA[[InStr("%FAILSTEP_NAME%", "Check Out") > 0 And IsVSSInstalled()]]]></condexpr>
+			<description>If the failed step was the checkout step, undo checkouts made by the build process</description>
+			<name>Undo Checkout</name>
+		</step>
+		<step action='SourceSafe'>
+			<AutoLocate type='11'>-1</AutoLocate>
+			<Comments></Comments>
+			<CompareOpt type='3'>2</CompareOpt>
+			<Database>%SAMPLEDB%</Database>
+			<LocalPath>%WORK_ROOT%\Source</LocalPath>
+			<LongFilenames type='11'>-1</LongFilenames>
+			<NoGet type='11'>0</NoGet>
+			<Operation>Undocheckout</Operation>
+			<Opt></Opt>
+			<OutputOpt type='3'>0</OutputOpt>
+			<Password></Password>
+			<Project>$/Source</Project>
+			<PromptOff type='11'>0</PromptOff>
+			<Recurse type='11'>-1</Recurse>
+			<SSExe></SSExe>
+			<ShowCmd type='11'>0</ShowCmd>
+			<ShowFilesOnly type='11'>0</ShowFilesOnly>
+			<TimeOpt type='3'>1</TimeOpt>
+			<Username>%SSUSER%</Username>
+			<Version></Version>
+			<WriteOpt type='3'>0</WriteOpt>
+			<Writeable type='11'>0</Writeable>
+			<condcompareto>Source</condcompareto>
+			<condcomparison type='3'>2</condcomparison>
+			<condexpr>%FAILSTEP_NAME%</condexpr>
+			<description>If the source checkout step failed, undo all checkouts of source code since some files may have gotten checked out, so that when the checkout step is built again, it won't fail because the build process now has some files checked out</description>
+			<indent type='3'>1</indent>
+			<name>Undo source checkout</name>
+			<outputfrom type='3'>1</outputfrom>
+		</step>
+		<step action='SourceSafe'>
+			<AutoLocate type='11'>-1</AutoLocate>
+			<Comments></Comments>
+			<CompareOpt type='3'>2</CompareOpt>
+			<Database>%SAMPLEDB%</Database>
+			<LocalPath>%WORK_ROOT%</LocalPath>
+			<LongFilenames type='11'>-1</LongFilenames>
+			<NoGet type='11'>0</NoGet>
+			<Operation>Undocheckout</Operation>
+			<Opt></Opt>
+			<OutputOpt type='3'>0</OutputOpt>
+			<Password></Password>
+			<Project>$/</Project>
+			<PromptOff type='11'>0</PromptOff>
+			<Recurse type='11'>-1</Recurse>
+			<SSExe></SSExe>
+			<ShowCmd type='11'>0</ShowCmd>
+			<ShowFilesOnly type='11'>0</ShowFilesOnly>
+			<TimeOpt type='3'>1</TimeOpt>
+			<Username>%SSUSER%</Username>
+			<Version></Version>
+			<WriteOpt type='3'>0</WriteOpt>
+			<Writeable type='11'>0</Writeable>
+			<condcompareto>Executables</condcompareto>
+			<condcomparison type='3'>2</condcomparison>
+			<condexpr>%FAILSTEP_NAME%</condexpr>
+			<description>If the exe checkout step failed, undo all checkouts of executables</description>
+			<indent type='3'>1</indent>
+			<name>Undo exe checkout</name>
+			<outputfrom type='3'>1</outputfrom>
+		</step>
+		<step action='Group'>
+			<description>If the failed step was the checkout step, undo checkouts made by the build process</description>
+			<name>Failed</name>
+		</step>
+		<step action='Log Message'>
+			<Message><![CDATA[
+**** OUTPUT FROM FAILED STEP ****
+
+%FAILSTEP_OUTPUT%
+
+**** END OF OUTPUT FROM FAILED STEP ****]]></Message>
+			<description>Output the failure output and message again so it is the last output to be logged</description>
+			<indent type='3'>1</indent>
+			<name>Show failed output</name>
+		</step>
+		<step action='Send Mail'>
+			<Attachments><![CDATA[%LOGFILE%
+]]></Attachments>
+			<From>%FROM_EMAIL%</From>
+			<Message><![CDATA[At %DATETIME%, the build '%PROJFILE%' on %COMPUTERNAME% failed with the following error:
+
+FAILURE INFORMATION:
+Step Name: %FAILSTEP_NAME%
+Step Status: %FAILSTEP_STATUS%
+Step Output:
+%FAILSTEP_OUTPUT%]]></Message>
+			<Port type='3'>25</Port>
+			<Server>%SMTP_SERVER%</Server>
+			<Subject>Build Failure</Subject>
+			<Timeout type='3'>10</Timeout>
+			<To>%TO_EMAIL%</To>
+			<checked type='11'>0</checked>
+			<description>Notify the build master that failure occurred</description>
+			<indent type='3'>1</indent>
+			<name>Notify of Failure</name>
+		</step>
+		<step action='Write File'>
+			<Append type='11'>-1</Append>
+			<Filename>%FAILED_LOG%</Filename>
+			<Text><![CDATA[%DATETIME%: %PROJFILE%, Build failed (step: %FAILSTEP_NAME%)
+]]></Text>
+			<description>Append a line to the completed log</description>
+			<indent type='3'>1</indent>
+			<name>Write failure</name>
+		</step>
+		<step action='Play Sound'>
+			<Filename>%PROJDIR%\..\Source\wav\candy.wav</Filename>
+			<Wait type='11'>0</Wait>
+			<buildfailsteps type='11'>0</buildfailsteps>
+			<continueonfail type='3'>1</continueonfail>
+			<indent type='3'>1</indent>
+			<name>Play fail sound</name>
+		</step></steps>
+	<macros>
+		<macro name='Build'>
+			<value>Release</value>
+		</macro>
+		<macro name='COMPANY_NAME'>
+			<description>company name macro used in Make VB, VC, and .NET steps</description>
+			<value>Test Company</value>
+		</macro>
+		<macro name='COMPLETED_LOG'>
+			<description>File that will contain a log line for each successful build</description>
+			<value>%SAMPLE_ROOT%\%PROJROOT%_Success.log</value>
+		</macro>
+		<macro name='FAILED_LOG'>
+			<description>File that will be written to for each failed build</description>
+			<value>%SAMPLE_ROOT%\%PROJROOT%_Fail.log</value>
+		</macro>
+		<macro name='FROM_EMAIL'>
+			<description>From address for emails</description>
+			<value>buildcomputer@yourco.com</value>
+		</macro>
+		<macro name='SAMPLE_ROOT'>
+			<description>Root dir containing files used by VSS sample</description>
+			<value>%TEMP%\VisBuildPro\VStudio</value>
+		</macro>
+		<macro name='SAMPLEDB'>
+			<description>The path to the SourceSafe database used by the sample</description>
+			<value>%SAMPLE_ROOT%\Database</value>
+		</macro>
+		<macro name='SMTP_SERVER'>
+			<description>Identity of the SMTP server to use when sending mail</description>
+			<value>localhost</value>
+		</macro>
+		<macro name='SSUSER'>
+			<description>Username for logging into SourceSafe database</description>
+			<value>Build</value>
+		</macro>
+		<macro name='TO_EMAIL'>
+			<description>E-mail address to send notification of success and failure to</description>
+			<value>cofd@163.com</value>
+		</macro>
+		<macro name='VSNET_SLN'>
+			<description>VS.NET 7.0 solution file without .sln extension</description>
+			<value>%WORK_ROOT%\Source\MyNETProjects</value>
+		</macro>
+		<macro name='WORK_ROOT'>
+			<description>Root folder containing working copies of files</description>
+			<value>%SAMPLE_ROOT%\work</value>
+		</macro></macros>
+	<script language='VBScript'><![CDATA[Sub CreateShortcut(target, sname)
+
+	Set objWshShell = CreateObject("Wscript.Shell")
+	
+	' Read desktop path using WshSpecialFolders object
+	strDesktopPath = objWshShell.SpecialFolders("Desktop")
+	
+	' Create a shortcut object on the desktop
+	Set objShortcut = objWshShell.CreateShortcut(strDesktopPath & "\" & sname & ".lnk")
+	
+	' Set shortcut object properties and save it
+	objShortcut.TargetPath = target
+	objShortcut.Save
+End Sub
+
+Function IsVS2003Installed()
+	IsVS2003Installed = Len(Application.ExpandMacros("%REG_READ(" & _
+		"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\7.1\InstallDir, )%")) > 1
+End Function
+
+Function IsVS2005Installed()
+	IsVS2005Installed = Len(Application.ExpandMacros("%REG_READ(" & _
+		"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\8.0\InstallDir, )%")) > 1	
+End Function
+
+Function IsVS2008Installed()
+	IsVS2008Installed = Len(Application.ExpandMacros("%REG_READ(" & _
+		"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\InstallDir, )%")) > 1
+End Function
+
+Function IsVS2010Installed()
+	IsVS2010Installed = Len(Application.ExpandMacros("%REG_READ(" & _
+		"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\10.0\InstallDir, )%")) > 1
+End Function
+
+Function IsVB6Installed()
+	IsVB6Installed = Len(Application.ExpandMacros("%REG_READ(" & _
+		"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\6.0\Setup\Microsoft Visual Basic\ProductDir, )%")) > 1
+End Function
+
+Function IsVC6Installed()
+	IsVC6Installed = Len(Application.ExpandMacros("%REG_READ(" & _
+		"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\6.0\Setup\Microsoft Visual C++\ProductDir, )%")) > 1
+End Function
+
+Function IsVSSInstalled()
+	IsVSSInstalled = Len(Application.ExpandMacros("%REG_READ(" & _
+		"HKCR\CLSID\{783CD4E4-9D54-11CF-B8EE-00608CC9A71F}\InprocServer32\, )%")) > 1
+End Function]]></script>
+</project>
