@@ -633,10 +633,14 @@ CREATE TABLE [{0}]
         {
             SqlHelper.Version version = SqlHelper.GetVersion(connstring);
 
-            if (version == SqlHelper.Version.SQLServer2000) return GetTableDetail2000();
-            if (version == SqlHelper.Version.SQLServer2005) return GetTableDetail2005();
-            if (version == SqlHelper.Version.SQLServer2008) return GetTableDetail2008();
-            return "";
+            if (version == SqlHelper.Version.SQLServer2000) 
+                return GetTableDetail2000();
+
+            if (version == SqlHelper.Version.SQLServer2005) 
+                return GetTableDetail2005();
+
+            //fix SQL 2012 bug  leixu 2014-06-05
+            return GetTableDetail2008();
         }
 
         private static string GetTableDetail2008()
