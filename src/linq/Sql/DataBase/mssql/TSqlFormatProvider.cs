@@ -9,10 +9,10 @@ using System.Text;
 namespace Kiss.Linq.Sql
 {
     public class TSqlFormatProvider : IFormatProvider
-    { 
+    {
         private static readonly object _sync = new object();
 
-        private readonly string[] Types = new string[] { "Int16", "Int32", "Int64", "UInt16", "UInt32", "UInt64", "Decimal", "Double" };
+        private readonly string[] Number_Types = new string[] { "Int16", "Int32", "Int64", "UInt16", "UInt32", "UInt64", "Decimal", "Double" };
 
         protected IBucket bucket;
 
@@ -417,11 +417,11 @@ namespace Kiss.Linq.Sql
         public string GetValue(object obj)
         {
             if (obj == null)
-                obj = string.Empty;
+                return "''";
 
-            if (Types.Contains(obj.GetType().Name))
+            if (Number_Types.Contains(obj.GetType().Name))
                 return obj.ToString();
-             
+
             if (obj is bool)
                 return (Convert.ToBoolean(obj) ? 1 : 0).ToString();
 
@@ -429,14 +429,10 @@ namespace Kiss.Linq.Sql
             if (type.IsEnum)
                 return ((int)obj).ToString();
 
-            string value;
-
             if (obj is DateTime)
-                value = GetDateTimeValue(Convert.ToDateTime(obj));
-            else
-                value = Convert.ToString(obj);
+                return string.Format("'{0}'", GetDateTimeValue(Convert.ToDateTime(obj)));
 
-            return string.Format("'{0}'", Escape(value));
+            return string.Format("N'{0}'", Escape(Convert.ToString(obj)));
         }
 
         public virtual string Escape(string value)
