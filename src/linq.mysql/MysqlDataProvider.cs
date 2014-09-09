@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using Kiss.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -416,7 +417,11 @@ namespace Kiss.Linq.Sql.Mysql
                 column.AppendFormat(" NOT NULL {0}",
                     item.PropertyType == typeof(int) ? "AUTO_INCREMENT" : string.Empty);
             else if (notnullattr != null)
-                column.AppendFormat(" NOT NULL DEFAULT {0}", new MysqlFormatProvider().GetValue(notnullattr.DefaultValue));
+            {
+                MysqlFormatProvider fp = new MysqlFormatProvider();
+                column.AppendFormat(" NOT NULL DEFAULT {0}",
+                    fp.GetValue(notnullattr.DefaultValue ?? (item.PropertyType.IsValueType ? Activator.CreateInstance(item.PropertyType) : null)));
+            }
 
             return column.ToString();
         }
