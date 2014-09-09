@@ -12,7 +12,7 @@ namespace Kiss.Linq.Sql
     {
         private static readonly object _sync = new object();
 
-        private readonly string[] Number_Types = new string[] { "Int16", "Int32", "Int64", "UInt16", "UInt32", "UInt64", "Decimal", "Double" };
+        public readonly string[] Number_Types = new string[] { "Int16", "Int32", "Int64", "UInt16", "UInt32", "UInt64", "Decimal", "Double" };
 
         protected IBucket bucket;
 
@@ -205,7 +205,9 @@ namespace Kiss.Linq.Sql
                                if (notnullattr != null && notnullattr.DefaultValue != null)
                                    builder.AppendFormat(GetValue(notnullattr.DefaultValue));
                                else
-                                   builder.Append("''");
+                                   builder.AppendFormat(GetValue(item.PropertyType.IsValueType
+                                       ? Activator.CreateInstance(item.PropertyType)
+                                       : null));
                            }
                        }
                    }
@@ -245,7 +247,9 @@ namespace Kiss.Linq.Sql
                                if (notnullattr != null && notnullattr.DefaultValue != null)
                                    builder.AppendFormat(GetValue(notnullattr.DefaultValue));
                                else
-                                   builder.Append("''");
+                                   builder.AppendFormat(GetValue(item.PropertyType.IsValueType
+                                       ? Activator.CreateInstance(item.PropertyType)
+                                       : null));
                            }
                        }
                    }
