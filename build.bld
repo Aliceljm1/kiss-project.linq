@@ -1,28 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
-<project version='7' encrypted='1'>
+<project version='8' encrypted='1'>
 	<steps type='0'>
-		<step action='Read File'>
-			<FailNoMatch type='11'>-1</FailNoMatch>
-			<FileIn>%PROJDIR%\src\linq\Properties\CommonAssemblyInfo.cs</FileIn>
-			<Find>\d+\.\d+</Find>
-			<Log type='11'>-1</Log>
-			<Macro>VERSION</Macro>
-			<NoModS type='11'>-1</NoModS>
-			<name>Read version</name>
-		</step>
-		<step action='Copy Files'>
-			<Converted type='11'>-1</Converted>
-			<Delay>15</Delay>
-			<DestDir>%PROJDIR%\lib</DestDir>
-			<Ext>Kiss.dll</Ext>
-			<Incremental type='11'>-1</Incremental>
-			<LogCopied type='11'>-1</LogCopied>
-			<ReadOnly type='11'>-1</ReadOnly>
-			<Retries>10</Retries>
-			<SourceDir>e:\kiss\build\%VERSION%\</SourceDir>
-			<TBD type='11'>-1</TBD>
-			<name>prepare lib</name>
-		</step>
 		<step action='Make VS.NET'>
 			<Attr type='11'>-1</Attr>
 			<Config>Release|Any CPU</Config>
@@ -34,7 +12,7 @@
 		<step action='Copy Files'>
 			<Converted type='11'>-1</Converted>
 			<Delay>15</Delay>
-			<DestDir>e:\kiss\build\%VERSION%\</DestDir>
+			<DestDir>%PROJDIR%\build\</DestDir>
 			<ExclExt>*.pdb</ExclExt>
 			<Ext>Kiss.Linq.*</Ext>
 			<Incremental type='11'>-1</Incremental>
@@ -48,7 +26,7 @@
 		<step action='Copy Files'>
 			<Converted type='11'>-1</Converted>
 			<Delay>15</Delay>
-			<DestDir>e:\kiss\build\%VERSION%\</DestDir>
+			<DestDir>%PROJDIR%\build\</DestDir>
 			<ExclExt>*.pdb</ExclExt>
 			<Ext><![CDATA[Kiss.Linq.Sqlite.dll
 sqlite3.dll
@@ -64,7 +42,7 @@ System.Data.SQLite.DLL]]></Ext>
 		<step action='Copy Files'>
 			<Converted type='11'>-1</Converted>
 			<Delay>15</Delay>
-			<DestDir>e:\kiss\build\%VERSION%\</DestDir>
+			<DestDir>%PROJDIR%\build\</DestDir>
 			<ExclExt>*.pdb</ExclExt>
 			<Ext><![CDATA[Kiss.Linq.Mysql.dll
 mysql.data.dll]]></Ext>
@@ -85,27 +63,15 @@ mysql.data.dll]]></Ext>
 		</step>
 		<step action='SourceSafe'>
 			<AutoLocate type='11'>-1</AutoLocate>
-			<Comments></Comments>
 			<CompareOpt type='3'>2</CompareOpt>
 			<Database>%SAMPLEDB%</Database>
 			<LocalPath>%WORK_ROOT%\Source</LocalPath>
 			<LongFilenames type='11'>-1</LongFilenames>
-			<NoGet type='11'>0</NoGet>
 			<Operation>Undocheckout</Operation>
-			<Opt></Opt>
-			<OutputOpt type='3'>0</OutputOpt>
-			<Password></Password>
 			<Project>$/Source</Project>
-			<PromptOff type='11'>0</PromptOff>
 			<Recurse type='11'>-1</Recurse>
-			<SSExe></SSExe>
-			<ShowCmd type='11'>0</ShowCmd>
-			<ShowFilesOnly type='11'>0</ShowFilesOnly>
 			<TimeOpt type='3'>1</TimeOpt>
 			<Username>%SSUSER%</Username>
-			<Version></Version>
-			<WriteOpt type='3'>0</WriteOpt>
-			<Writeable type='11'>0</Writeable>
 			<condcompareto>Source</condcompareto>
 			<condcomparison type='3'>2</condcomparison>
 			<condexpr>%FAILSTEP_NAME%</condexpr>
@@ -116,27 +82,15 @@ mysql.data.dll]]></Ext>
 		</step>
 		<step action='SourceSafe'>
 			<AutoLocate type='11'>-1</AutoLocate>
-			<Comments></Comments>
 			<CompareOpt type='3'>2</CompareOpt>
 			<Database>%SAMPLEDB%</Database>
 			<LocalPath>%WORK_ROOT%</LocalPath>
 			<LongFilenames type='11'>-1</LongFilenames>
-			<NoGet type='11'>0</NoGet>
 			<Operation>Undocheckout</Operation>
-			<Opt></Opt>
-			<OutputOpt type='3'>0</OutputOpt>
-			<Password></Password>
 			<Project>$/</Project>
-			<PromptOff type='11'>0</PromptOff>
 			<Recurse type='11'>-1</Recurse>
-			<SSExe></SSExe>
-			<ShowCmd type='11'>0</ShowCmd>
-			<ShowFilesOnly type='11'>0</ShowFilesOnly>
 			<TimeOpt type='3'>1</TimeOpt>
 			<Username>%SSUSER%</Username>
-			<Version></Version>
-			<WriteOpt type='3'>0</WriteOpt>
-			<Writeable type='11'>0</Writeable>
 			<condcompareto>Executables</condcompareto>
 			<condcomparison type='3'>2</condcomparison>
 			<condexpr>%FAILSTEP_NAME%</condexpr>
@@ -192,7 +146,6 @@ Step Output:
 		</step>
 		<step action='Play Sound'>
 			<Filename>%PROJDIR%\..\Source\wav\candy.wav</Filename>
-			<Wait type='11'>0</Wait>
 			<buildfailsteps type='11'>0</buildfailsteps>
 			<continueonfail type='3'>1</continueonfail>
 			<indent type='3'>1</indent>
