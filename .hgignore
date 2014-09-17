@@ -8,3 +8,4 @@ syntax: glob
 *.docstates
 src/unittest/db.db3
 build/
+packages/
