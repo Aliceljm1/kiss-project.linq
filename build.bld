@@ -29,11 +29,12 @@
 			<DestDir>%PROJDIR%\build\</DestDir>
 			<ExclExt>*.pdb</ExclExt>
 			<Ext><![CDATA[Kiss.Linq.Sqlite.dll
-sqlite3.dll
+SQLite.Interop.dll
 System.Data.SQLite.DLL]]></Ext>
 			<Incremental type='11'>-1</Incremental>
 			<LogCopied type='11'>-1</LogCopied>
 			<ReadOnly type='11'>-1</ReadOnly>
+			<Recurse type='11'>-1</Recurse>
 			<Retries>10</Retries>
 			<SourceDir>%PROJDIR%\src\linq.sqlite\bin\Release</SourceDir>
 			<TBD type='11'>-1</TBD>
