@@ -12,4 +12,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("KISS Project")]
 
 [assembly: AssemblyVersion("4.6.*")]
-[assembly: AssemblyFileVersion("4.6.20131129.0")]
+[assembly: AssemblyFileVersion("4.6.1409.22")]
