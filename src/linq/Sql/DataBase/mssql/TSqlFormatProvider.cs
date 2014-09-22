@@ -418,7 +418,7 @@ namespace Kiss.Linq.Sql
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public string GetValue(object obj)
+        public virtual string GetValue(object obj)
         {
             if (obj == null)
                 return "''";
